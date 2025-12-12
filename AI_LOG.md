@@ -674,7 +674,95 @@ Users now have **three ways** to run each service:
 | **Processor Worker** | `python -m src.processor` | `telemetry-processor` | `src.processor.main:main` |
 | **Simulator** | `python -m simulator` | `telemetry-simulator` | `simulator.main:main` |
 
-**Commit:** (pending)
+**Commit:** `daf7844` - "Add __main__.py entry points and console scripts"
+
+---
+
+## Interaction 17: Processor Library Extraction Documentation
+**Tool:** GitHub Copilot (Claude Sonnet 4.5)
+**Mode:** Chat
+**Instructions File:** `.github/copilot-instructions.md`
+**Purpose:** Document architectural refactoring to extract reusable infrastructure from processor into dedicated library packages
+
+### Context
+After reviewing ARCHITECTURE.md, user identified that the processor package was too large (15 files) with mixed concerns - service-specific orchestration logic and generic infrastructure components that could be reused by other services.
+
+### Prompt
+```
+The processor looks kind of large here. There's a lot of files in processor. It almost seems to me that it could be split up into more directories for more reusability. What do you think about that?
+```
+
+### AI Response
+Analyzed the processor directory structure and examined key infrastructure files (consumer.py, deserializer.py, error_handler.py). Confirmed that many components are generic infrastructure rather than telemetry-specific logic. Proposed reorganization into three new library packages plus slimmed processor service.
+
+**Architecture Changes:**
+
+**New Library Packages:**
+
+1. **`src/consumers/`** - Generic stream consumer infrastructure (3 files):
+   - `consumer.py`: Generic stream consumer with composition pattern
+   - `deserializer.py`: Message parsing and validation
+   - `error_handler.py`: Exponential backoff retry logic
+   - `models.py`: Consumer-specific models
+   - `exceptions.py`: Consumer-specific exceptions
+
+2. **`src/aggregation/`** - Generic windowing/aggregation library (3 files):
+   - `base_aggregator.py`: Abstract base with shared window utilities
+   - `tumbling_window.py`: Tumbling window aggregator (renamed from aggregator.py)
+   - `state.py`: Window state management
+   - `models.py`: Aggregation-specific models (WindowState, AggregatedMetric)
+   - `exceptions.py`: Aggregation-specific exceptions
+
+3. **`src/detection/`** - Generic anomaly detection library (2 files):
+   - `base_detector.py`: Abstract base with shared detection utilities
+   - `threshold.py`: Threshold-based detector (renamed from detector.py)
+   - `models.py`: Detection-specific models (AnomalyResult)
+   - `exceptions.py`: Detection-specific exceptions
+
+**Slimmed Processor Service (`src/processor/`)** - 7 files (57% reduction from 15):
+   - `__init__.py`
+   - `__main__.py`
+   - `py.typed`
+   - `main.py`: Service entry point
+   - `worker.py`: Orchestration logic (uses libraries)
+   - `config.py`: Processor-specific configuration
+   - `models.py`: Processor-specific models
+   - `exceptions.py`: Processor-specific exceptions
+
+**Files Modified:**
+
+1. **`DESIGN.md`**:
+   - Updated high-level organization to include consumers/, aggregation/, detection/
+   - Added comprehensive section (8) "Reusable Infrastructure Libraries"
+   - Documented directory structures for all three new libraries
+   - Explained purpose, reusability, and benefits of each library
+   - Documented slimmed processor service structure
+   - Renumbered subsequent sections (9, 10)
+
+2. **`ARCHITECTURE.md`**:
+   - Updated Processor section (3) to show orchestration of libraries
+   - Added Consumer Infrastructure section (4) with features and dependencies
+   - Added Aggregation Infrastructure section (5) with features and dependencies
+   - Added Detection Infrastructure section (6) with features and dependencies
+   - Renumbered Streams (7), Storage (8), Alerts (9), Simulator (10)
+   - Updated processor dependencies to reference new libraries
+   - Updated data flow to show library usage at each processing step
+
+**Benefits:**
+- **57% File Reduction**: Processor slimmed from 15 to 7 files
+- **Clear Separation**: Service orchestration vs generic infrastructure
+- **Reusability**: Consumer, aggregation, detection logic available to all services
+- **Independent Evolution**: Libraries can be versioned separately
+- **Future PyPI Packages**: Each library designed for standalone distribution
+- **Cross-Service Usage**: Analytics, alerts, billing services can use same infrastructure
+
+**Design Rationale:**
+- Consumer infrastructure is completely generic - works with any stream source and domain model
+- Aggregation library uses configurable windows and statistics - applicable to any metric stream
+- Detection library provides extensible anomaly detection - useful for security, performance, fraud detection
+- Processor becomes pure orchestration - wires up libraries for telemetry-specific processing
+
+**Commit:** `c7adbbe` - "Refactor: Document processor library extraction"
 
 
 
