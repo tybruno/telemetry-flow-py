@@ -59,6 +59,9 @@ The Distributed Network Telemetry Processing & Anomaly Detection system consists
 **Purpose**: HTTP API for receiving telemetry data from devices
 
 **What It Contains**:
+- `__init__.py`: Package initialization
+- `__main__.py`: Module entry point for `python -m src.ingest`
+- `py.typed`: Type information marker
 - `main.py`: FastAPI application entry point
 - `api.py`: HTTP endpoints (`POST /telemetry`)
 - `service.py`: Business logic for ingestion
@@ -102,8 +105,10 @@ docker-compose up ingest
 **Purpose**: Orchestrate event processing using consumer, aggregation, and detection libraries
 
 **What It Contains**:
-- `main.py`: Worker entry point
+- `__init__.py`: Package initialization
 - `__main__.py`: Module entry point for `python -m src.processor`
+- `py.typed`: Type information marker
+- `main.py`: Worker entry point
 - `worker.py`: Processing orchestrator (uses libraries)
 - `config.py`: Processor-specific configuration
 - `models.py`: Telemetry-specific models (window keys, metric identifiers)
@@ -157,6 +162,8 @@ docker-compose up processor
 **Purpose**: Reusable stream consumer library with robust error handling and message processing
 
 **What It Contains**:
+- `__init__.py`: Package initialization
+- `py.typed`: Type information marker
 - `consumer.py`: Generic stream consumer with composition pattern
 - `deserializer.py`: Message parsing and validation
 - `error_handler.py`: Exponential backoff retry logic
@@ -187,6 +194,8 @@ docker-compose up processor
 **Purpose**: Reusable time-windowed aggregation library for metric processing
 
 **What It Contains**:
+- `__init__.py`: Package initialization
+- `py.typed`: Type information marker
 - `base_aggregator.py`: Abstract base with shared window utilities
 - `tumbling_window.py`: Tumbling window aggregator implementation
 - `window_state.py`: Window state management and tracking
@@ -215,6 +224,8 @@ docker-compose up processor
 **Purpose**: Reusable anomaly detection library with multiple strategies
 
 **What It Contains**:
+- `__init__.py`: Package initialization
+- `py.typed`: Type information marker
 - `base_detector.py`: Abstract base with shared detection utilities
 - `threshold.py`: Threshold-based detector implementation
 - `models.py`: Detection-specific models (`AnomalyResult`)
@@ -225,7 +236,7 @@ docker-compose up processor
 - Stateless design - operates on aggregated metrics
 
 **Dependencies**:
-- `aggregation.models.AggregatedMetric`: Input metric type
+- `aggregation.models.WindowMetrics`: Input metric type
 
 **Entry Point**: None (library only)
 
@@ -242,6 +253,8 @@ docker-compose up processor
 **Purpose**: Reusable message streaming infrastructure (implements `StreamProtocol`)
 
 **What It Contains**:
+- `__init__.py`: Package initialization
+- `py.typed`: Type information marker
 - `redis_stream.py`: Redis Streams implementation with at-least-once delivery
 - `models.py`: Stream-specific models (`StreamMessage`, `ConsumerGroup`)
 - `exceptions.py`: Stream-specific exceptions
@@ -269,6 +282,8 @@ docker-compose up processor
 **Purpose**: Reusable state persistence infrastructure (implements `StorageProtocol`)
 
 **What It Contains**:
+- `__init__.py`: Package initialization
+- `py.typed`: Type information marker
 - `base.py`: `BaseStorage` ABC with shared validation
 - `redis_store.py`: Redis key-value storage implementation
 - `models.py`: Storage-specific models
@@ -296,6 +311,8 @@ docker-compose up processor
 **Purpose**: Reusable alert delivery infrastructure (implements `AlerterProtocol`)
 
 **What It Contains**:
+- `__init__.py`: Package initialization
+- `py.typed`: Type information marker
 - `base.py`: `BaseAlerter` ABC with shared formatting
 - `console.py`: Console/stdout alert implementation
 - `models.py`: Alert-specific models (`Alert`, `AlertSeverity`)
@@ -320,6 +337,8 @@ docker-compose up processor
 **Purpose**: Simulate network devices sending telemetry data
 
 **What It Contains**:
+- `__init__.py`: Package initialization
+- `__main__.py`: Module entry point for `python -m simulator`
 - `main.py`: Simulator entry point
 - Device simulation logic for testing
 

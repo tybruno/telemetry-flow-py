@@ -156,10 +156,18 @@ class TelemetryEvent:  # Shared across all services
 class IngestRequest:   # Only used by ingest service
 class IngestResponse:  # Only used by ingest service
 
+# src/consumers/models.py
+class ConsumerMessage:  # Consumer-specific message wrapper
+
+# src/aggregation/models.py
+class WindowMetrics:   # Generic window statistics (avg, min, max, stddev, count)
+class WindowBounds:    # Window timestamp boundaries
+
+# src/detection/models.py
+class AnomalyResult:   # Generic anomaly detection result
+
 # src/processor/models.py
-class WindowState:     # Window aggregation state (device/interface/metric)
-class AggregatedMetric:  # Completed window with statistics
-class AnomalyResult:   # Anomaly detection result
+class TelemetryWindowKey:  # Telemetry-specific window identifier (device/interface/metric)
 
 # src/streams/models.py
 class StreamMessage:   # Only used by stream infrastructure
@@ -261,69 +269,7 @@ service = IngestService(stream=stream)
 - Can swap implementations without changing service code
 - Infrastructure logic is isolated and reusable
 
-#### 7. Robust Consumer Design with Composition
-
-**Decision**: TelemetryConsumer orchestrates message processing using composition of specialized components.
-
-**Justification**:
-- **Real Responsibilities**: Consumer handles deserialization, validation, error handling, retries, and backpressure
-- **Composition Pattern**: Each concern delegated to specialized component
-- **Production-Ready**: Handles malformed data, transient failures, and overload scenarios
-- **Testability**: Each component can be mocked independently
-
-**Structure**:
-```python
-# processor/consumer.py
-class TelemetryConsumer:
-    """Robust consumer with complete message processing pipeline."""
-    
-    def __init__(
-        self,
-        *,
-        stream: StreamProtocol,              # Stream operations
-        deserializer: MessageDeserializer,   # Raw data → TelemetryEvent
-        error_handler: ConsumerErrorHandler, # Retry logic & classification
-        backpressure: BackpressureManager,   # Rate limiting
-        stream_name: str,
-        group_name: str,
-        consumer_name: str,
-    ) -> None:
-        """Initialize with all pipeline components."""
-
-# processor/deserializer.py
-class MessageDeserializer:
-    """Parses and validates raw stream messages."""
-    
-    def deserialize(self, data: dict) -> TelemetryEvent:
-        """Parse raw data into typed TelemetryEvent."""
-
-# processor/error_handler.py
-class ConsumerErrorHandler:
-    """Retry logic with exponential backoff."""
-    
-    async def with_retry(
-        self, 
-        operation: Callable, 
-        message_id: str, 
-        data: Any
-    ) -> T:
-        """Execute operation with automatic retries."""
-```
-
-**Processing Pipeline**:
-1. **Consume**: Read messages from stream via StreamProtocol
-2. **Deserialize**: Parse raw data into TelemetryEvent (with validation)
-3. **Error Handling**: Retry transient failures with exponential backoff
-4. **Backpressure**: Apply rate limiting if system overloaded
-5. **Acknowledge**: Mark message as processed for at-least-once delivery
-
-**Benefits**:
-- Each component has single responsibility
-- Easy to test each stage independently
-- Production-grade error handling
-- Can swap any component (e.g., different deserializer for different formats)
-
-#### 8. Reusable Infrastructure Libraries
+#### 7. Reusable Infrastructure Libraries
 
 **Decision**: Extract generic infrastructure components from processor into dedicated library packages.
 
@@ -422,6 +368,10 @@ tests/
 ├── core/
 │   ├── conftest.py            # Core-specific fixtures
 │   └── test_models.py
+├── ingest/
+│   ├── conftest.py            # Ingest service fixtures
+│   ├── test_api.py
+│   └── test_service.py
 ├── consumers/
 │   ├── conftest.py            # Consumer-specific fixtures
 │   ├── test_consumer.py
@@ -444,9 +394,12 @@ tests/
 ├── storage/
 │   ├── conftest.py            # Storage-specific fixtures
 │   └── test_redis_store.py
-└── alerts/
-    ├── conftest.py            # Alert-specific fixtures
-    └── test_console.py
+├── alerts/
+│   ├── conftest.py            # Alert-specific fixtures
+│   └── test_console.py
+└── simulator/
+    ├── conftest.py            # Simulator-specific fixtures
+    └── test_main.py
 ```
 
 **Fixture Locality**:
