@@ -103,9 +103,10 @@ docker-compose up ingest
 
 **What It Contains**:
 - `main.py`: Worker entry point
+- `__main__.py`: Module entry point for `python -m src.processor`
 - `worker.py`: Processing orchestrator (uses libraries)
 - `config.py`: Processor-specific configuration
-- `models.py`: Processor-specific models
+- `models.py`: Telemetry-specific models (window keys, metric identifiers)
 - `exceptions.py`: Processor-specific exceptions
 
 **Communication**:
@@ -115,9 +116,10 @@ docker-compose up ingest
   - Sends alerts via `AlerterProtocol`
 
 **Dependencies**:
-- `consumers.consumer.TelemetryConsumer`: Generic stream consumer
+- `consumers.consumer.StreamConsumer`: Generic stream consumer
 - `aggregation.tumbling_window.TumblingWindowAggregator`: Windowed aggregation
 - `detection.threshold.ThresholdDetector`: Anomaly detection
+- `core.protocols.StreamProtocol`: Stream operations
 - `core.protocols.StorageProtocol`: To persist state
 - `core.protocols.AlerterProtocol`: To send alerts
 - `streams.redis_stream.RedisStream`: Concrete stream implementation
@@ -158,16 +160,16 @@ docker-compose up processor
 - `consumer.py`: Generic stream consumer with composition pattern
 - `deserializer.py`: Message parsing and validation
 - `error_handler.py`: Exponential backoff retry logic
+- `backpressure.py`: Rate limiting and backpressure management
 - `models.py`: Consumer-specific models
 - `exceptions.py`: Consumer-specific exceptions
 
 **Communication**:
-- Wraps `StreamProtocol` for stream operations
+- Consumes via any `StreamProtocol` implementation
 - Used by Processor service and can be used by any service needing stream consumption
 
 **Dependencies**:
 - `core.protocols.StreamProtocol`: Stream operations interface
-- `streams.backpressure.BackpressureManager`: Rate limiting
 
 **Entry Point**: None (library only)
 
@@ -187,8 +189,8 @@ docker-compose up processor
 **What It Contains**:
 - `base_aggregator.py`: Abstract base with shared window utilities
 - `tumbling_window.py`: Tumbling window aggregator implementation
-- `state.py`: Window state management
-- `models.py`: Aggregation-specific models (`WindowState`, `AggregatedMetric`)
+- `window_state.py`: Window state management and tracking
+- `models.py`: Aggregation-specific models (`WindowMetrics`, `WindowBounds`)
 - `exceptions.py`: Aggregation-specific exceptions
 
 **Communication**:
@@ -196,7 +198,7 @@ docker-compose up processor
 - Stateless design - state managed externally via `StorageProtocol`
 
 **Dependencies**:
-- `core.models.TelemetryEvent`: Input event type (can be generalized)
+- None - fully generic, accepts any numeric metric data via protocol methods
 
 **Entry Point**: None (library only)
 
@@ -241,7 +243,6 @@ docker-compose up processor
 
 **What It Contains**:
 - `redis_stream.py`: Redis Streams implementation with at-least-once delivery
-- `backpressure.py`: Rate limiting and backpressure management
 - `models.py`: Stream-specific models (`StreamMessage`, `ConsumerGroup`)
 - `exceptions.py`: Stream-specific exceptions
 
@@ -607,15 +608,16 @@ worker = TelemetryWorker(alerter=alerter, ...)
 ### Adding New Anomaly Detectors
 
 ```python
-# processor/ml_detector.py
-class MLDetector:
+# detection/ml_detector.py
+class MLDetector(BaseDetector):
     """Machine learning-based detector."""
     
-    def detect(self, metric: AggregatedMetric) -> Anomaly | None:
+    def detect(self, metrics: WindowMetrics) -> AnomalyResult | None:
         # Use trained model
         pass
 
 # Wire up in processor main
+from src.detection.ml_detector import MLDetector
 detector = MLDetector(model_path)
 worker = TelemetryWorker(detector=detector, ...)
 ```

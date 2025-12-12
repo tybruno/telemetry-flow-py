@@ -37,7 +37,11 @@ take_home/
 ├── src/                      # Main source code
 │   ├── core/                # Shared domain (contracts & models)
 │   ├── ingest/              # Ingest service (HTTP API - future repo)
+│   │   ├── __main__.py      # Module entry point
+│   │   └── ...
 │   ├── processor/           # Processor service (Event processing - future repo)
+│   │   ├── __main__.py      # Module entry point
+│   │   └── ...
 │   ├── consumers/           # Consumer infrastructure library (future library)
 │   ├── aggregation/         # Aggregation infrastructure library (future library)
 │   ├── detection/           # Detection infrastructure library (future library)
@@ -46,6 +50,8 @@ take_home/
 │   ├── alerts/              # Alert infrastructure library (future library)
 │   └── utils/               # Generic utilities (future library)
 ├── simulator/               # Device simulator (standalone testing tool)
+│   ├── __main__.py          # Module entry point
+│   └── ...
 ├── tests/                   # Test suite (mirrors src/)
 ├── docker/                  # Container configurations
 ├── config/                  # Service configurations
@@ -70,6 +76,7 @@ take_home/
 ```
 src/ingest/
 ├── __init__.py
+├── __main__.py           # Module entry point
 ├── py.typed              # Type information marker
 ├── main.py               # Service entry point
 ├── api.py                # HTTP endpoints (FastAPI)
@@ -336,11 +343,12 @@ consumers/
 ├── consumer.py              # Generic stream consumer with composition
 ├── deserializer.py          # Message parsing and validation
 ├── error_handler.py         # Exponential backoff retry logic
+├── backpressure.py          # Rate limiting and backpressure management
 ├── models.py                # Consumer-specific models
 └── exceptions.py            # Consumer-specific exceptions
 ```
 
-**Purpose**: Generic stream consumer infrastructure that can consume from any stream source, deserialize messages, handle errors with retries, and manage backpressure.
+**Purpose**: Generic stream consumer infrastructure that consumes via any `StreamProtocol` implementation, deserializes messages, handles errors with retries, and manages backpressure.
 
 **Reusability**: Any service that needs to consume from streams (alerts service, analytics service, etc.) can use this library.
 
@@ -351,14 +359,14 @@ aggregation/
 ├── py.typed
 ├── base_aggregator.py       # Abstract base with shared window utilities
 ├── tumbling_window.py       # Tumbling window aggregator
-├── state.py                 # Window state management
-├── models.py                # Aggregation-specific models
+├── window_state.py          # Window state management and tracking
+├── models.py                # Generic window models (WindowMetrics, WindowBounds)
 └── exceptions.py            # Aggregation-specific exceptions
 ```
 
-**Purpose**: Generic time-windowed aggregation logic that can aggregate any metrics with configurable window sizes and statistics (avg, min, max, stddev, count).
+**Purpose**: Fully generic time-windowed aggregation logic that can aggregate any numeric metrics with configurable window sizes and statistics (avg, min, max, stddev, count). Domain-agnostic design.
 
-**Reusability**: Any service needing windowed aggregation (billing, analytics, monitoring) can use this library.
+**Reusability**: Any service needing windowed aggregation (billing, analytics, monitoring, fraud detection) can use this library without modification.
 
 **3. Detection Library (`src/detection/`)**:
 ```
@@ -379,16 +387,16 @@ detection/
 ```
 processor/
 ├── __init__.py
-├── __main__.py
+├── __main__.py              # Module entry point
 ├── py.typed
 ├── main.py                  # Service entry point
 ├── worker.py                # Orchestration logic (uses libraries)
 ├── config.py                # Processor-specific configuration
-├── models.py                # Processor-specific models
+├── models.py                # Telemetry window keys and metric identifiers
 └── exceptions.py            # Processor-specific exceptions
 ```
 
-**Purpose**: Orchestrates the consumer, aggregation, and detection libraries specifically for telemetry processing. Contains only telemetry-specific business logic and configuration.
+**Purpose**: Orchestrates the consumer, aggregation, and detection libraries specifically for telemetry processing. Contains only telemetry-specific business logic, configuration, and domain models.
 
 **Benefits of Extraction**:
 - **57% File Reduction**: Processor slimmed from 15 files to 7 files
@@ -397,7 +405,7 @@ processor/
 - **Standalone Distribution**: Each library can become PyPI package
 - **Cross-Service Reuse**: Other services get production-grade infrastructure
 
-#### 9. Test Structure Mirrors Source Structure
+#### 8. Test Structure Mirrors Source Structure
 
 **Decision**: Tests are organized in a one-to-one mapping with source packages, with package-specific fixtures.
 
@@ -414,14 +422,31 @@ tests/
 ├── core/
 │   ├── conftest.py            # Core-specific fixtures
 │   └── test_models.py
+├── consumers/
+│   ├── conftest.py            # Consumer-specific fixtures
+│   ├── test_consumer.py
+│   ├── test_deserializer.py
+│   └── test_error_handler.py
+├── aggregation/
+│   ├── conftest.py            # Aggregation-specific fixtures
+│   ├── test_tumbling_window.py
+│   └── test_window_state.py
+├── detection/
+│   ├── conftest.py            # Detection-specific fixtures
+│   └── test_threshold.py
 ├── processor/
 │   ├── conftest.py            # Processor-specific fixtures
 │   ├── test_worker.py
-│   ├── test_aggregator.py
 │   └── test_integration.py
-└── streams/
-    ├── conftest.py            # Stream-specific fixtures
-    └── test_redis_stream.py
+├── streams/
+│   ├── conftest.py            # Stream-specific fixtures
+│   └── test_redis_stream.py
+├── storage/
+│   ├── conftest.py            # Storage-specific fixtures
+│   └── test_redis_store.py
+└── alerts/
+    ├── conftest.py            # Alert-specific fixtures
+    └── test_console.py
 ```
 
 **Fixture Locality**:
@@ -444,7 +469,7 @@ def mock_aggregator():
 - Package extraction includes all necessary test infrastructure
 - Easy to run tests for a specific package: `pytest tests/processor/`
 
-#### 10. Type Safety with py.typed
+#### 9. Type Safety with py.typed
 
 **Decision**: Every distributable package includes a `py.typed` marker file.
 
@@ -459,6 +484,12 @@ def mock_aggregator():
 src/
 ├── core/
 │   └── py.typed              # Core package exports types
+├── consumers/
+│   └── py.typed              # Consumer library exports types
+├── aggregation/
+│   └── py.typed              # Aggregation library exports types
+├── detection/
+│   └── py.typed              # Detection library exports types
 ├── streams/
 │   └── py.typed              # Stream library exports types
 ├── storage/
