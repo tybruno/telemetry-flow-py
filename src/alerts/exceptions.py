@@ -16,4 +16,4 @@ class AlertDeliveryError(AlertError):
     """Failed to deliver alert."""
 
 
-__all__ = ["AlertError", "AlertDeliveryError"]
+__all__ = ["AlertDeliveryError", "AlertError"]

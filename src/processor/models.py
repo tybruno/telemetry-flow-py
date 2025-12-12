@@ -72,4 +72,4 @@ class TelemetryMetricIdentifier:
     unit: str | None = None
 
 
-__all__ = ["TelemetryWindowKey", "TelemetryMetricIdentifier"]
+__all__ = ["TelemetryMetricIdentifier", "TelemetryWindowKey"]

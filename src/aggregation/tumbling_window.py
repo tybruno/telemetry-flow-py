@@ -33,7 +33,7 @@ class TumblingWindowAggregator(BaseAggregator):
             print(f"Avg: {result.avg_value}")
     """
 
-    __slots__ = ("_window_size", "_window_delta", "_windows")
+    __slots__ = ("_window_delta", "_window_size", "_windows")
 
     _window_size: int
     _window_delta: timedelta

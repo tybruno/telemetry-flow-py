@@ -89,6 +89,6 @@ class ServiceUnavailableError(IngestError):
 __all__ = [
     "IngestError",
     "InvalidPayloadError",
-    "StreamPublishError",
     "ServiceUnavailableError",
+    "StreamPublishError",
 ]

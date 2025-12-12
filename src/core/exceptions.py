@@ -71,7 +71,7 @@ class ValidationError(TelemetryError):
 
 
 __all__ = [
-    "TelemetryError",
     "ConfigurationError",
+    "TelemetryError",
     "ValidationError",
 ]

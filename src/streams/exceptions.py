@@ -21,4 +21,4 @@ class BackpressureError(StreamError):
     """Backpressure threshold exceeded."""
 
 
-__all__ = ["StreamError", "ConsumerGroupError", "BackpressureError"]
+__all__ = ["BackpressureError", "ConsumerGroupError", "StreamError"]

@@ -16,4 +16,4 @@ class StatePersistenceError(StorageError):
     """Failed to persist state."""
 
 
-__all__ = ["StorageError", "StatePersistenceError"]
+__all__ = ["StatePersistenceError", "StorageError"]

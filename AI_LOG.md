@@ -849,6 +849,256 @@ Core (protocols, models)
   ↓
 Consumers (backpressure included)
   ↓
+Aggregation (domain-agnostic, generic metrics)
+  ↓
+Detection (uses aggregation models)
+  ↓
+Processor (orchestrates all libraries)
+```
+
+**Model Organization:**
+- **`aggregation/models.py`**: Generic `WindowMetrics`, `WindowBounds` (no TelemetryEvent dependency)
+- **`detection/models.py`**: Generic `AnomalyResult`, `AnomalySeverity` (reusable)
+- **`processor/models.py`**: Telemetry-specific `TelemetryWindowKey`, `TelemetryMetricIdentifier`
+
+**Commit:** `683843d` - "Fix: Final documentation consistency"
+
+---
+
+## Interaction 19: Library Extraction Implementation
+**Tool:** GitHub Copilot (Claude Sonnet 4.5)
+**Mode:** Chat (design placeholder stubs mode)
+**Instructions File:** `.github/copilot-instructions.md`
+**Purpose:** Reorganize stub files to match the finalized architecture by extracting consumers, aggregation, and detection libraries from processor
+
+### Context
+After finalizing architecture and design documentation, user requested implementation of the library extraction by rearranging actual stub files.
+
+### Prompt
+```
+Great, now that we have the architecture and the design all figured out, let's go ahead and start rearranging our stubs in our source directory and our test directory. So rearrange the directories to match what we just designed.
+```
+
+### AI Response
+Implemented complete library extraction refactoring by creating three new library packages (consumers, aggregation, detection) and moving 15 files from processor with appropriate renaming. Updated all models to be domain-agnostic and created matching test structure.
+
+**Library Packages Created:**
+
+1. **`src/consumers/`** - Stream consumer infrastructure (9 files):
+   - **Moved files**:
+     - `processor/consumer.py` → `consumers/consumer.py` (class renamed to `TelemetryConsumer`)
+     - `processor/deserializer.py` → `consumers/deserializer.py`
+     - `processor/error_handler.py` → `consumers/error_handler.py`
+     - `streams/backpressure.py` → `consumers/backpressure.py`
+   - **New files**:
+     - `consumers/models.py` - `ConsumerMessage`, `ConsumerState` models
+     - `consumers/exceptions.py` - `ConsumerError`, `DeserializationError`, `ValidationError`, `RetryExhaustedError`, `BackpressureError`
+     - `consumers/__init__.py` - Package initialization with exports
+     - `consumers/py.typed` - Type marker
+
+2. **`src/aggregation/`** - Windowing and aggregation library (7 files):
+   - **Moved files**:
+     - `processor/aggregator.py` → `aggregation/tumbling_window.py`
+     - `processor/base_aggregator.py` → `aggregation/base_aggregator.py`
+     - `processor/state.py` → `aggregation/window_state.py`
+   - **New files**:
+     - `aggregation/models.py` - Generic `WindowMetrics`, `WindowBounds` (no TelemetryEvent dependency)
+     - `aggregation/exceptions.py` - `AggregationError`, `WindowClosedError`, `InvalidWindowError`
+     - `aggregation/__init__.py` - Package initialization with exports
+     - `aggregation/py.typed` - Type marker
+
+3. **`src/detection/`** - Anomaly detection library (6 files):
+   - **Moved files**:
+     - `processor/detector.py` → `detection/threshold.py`
+     - `processor/base_detector.py` → `detection/base_detector.py`
+   - **New files**:
+     - `detection/models.py` - Generic `AnomalyResult`, `AnomalySeverity` enum
+     - `detection/exceptions.py` - `DetectionError`, `InvalidThresholdError`, `InvalidMetricError`, `DetectorNotConfiguredError`
+     - `detection/__init__.py` - Package initialization with exports
+     - `detection/py.typed` - Type marker
+
+**Processor Service Slimmed (8 files, 53% reduction from 15):**
+   - Kept: `__init__.py`, `__main__.py`, `py.typed`, `main.py`, `worker.py`, `config.py`
+   - Updated:
+     - `models.py` - Telemetry-specific: `TelemetryWindowKey`, `TelemetryMetricIdentifier`
+     - `exceptions.py` - Service-specific: `ProcessorError`, `OrchestrationError`, `StateRecoveryError`, `TelemetryProcessingError`
+
+**Model Changes (Domain-Agnostic Design):**
+
+- **Aggregation Models**:
+  - Renamed `AggregatedMetric` → `WindowMetrics` (generic name)
+  - Renamed `WindowState` → `WindowBounds` (clearer name)
+  - Removed `device_id`, `interface`, `metric_name` fields (telemetry-specific)
+  - Added `window_id: str` for generic window identification
+  - Changed to accept any numeric metric data
+
+- **Detection Models**:
+  - Created `AnomalyResult` with generic fields
+  - Added `AnomalySeverity` enum (LOW, MEDIUM, HIGH, CRITICAL)
+  - Removed telemetry-specific fields
+  
+- **Processor Models** (Telemetry-Specific):
+  - `TelemetryWindowKey` - Identifies telemetry aggregation windows (device_id, interface, metric_name)
+  - `TelemetryMetricIdentifier` - Identifies specific telemetry metrics (metric_name, metric_type, unit)
+
+**Test Structure Created:**
+
+1. **`tests/consumers/`**:
+   - `conftest.py` - Consumer test fixtures
+   - `test_consumer.py` - TelemetryConsumer tests
+   - `test_deserializer.py` - MessageDeserializer tests
+   - `test_error_handler.py` - ConsumerErrorHandler tests
+   - `test_backpressure.py` - BackpressureManager tests
+
+2. **`tests/aggregation/`**:
+   - `conftest.py` - Aggregation test fixtures
+   - `test_tumbling_window.py` - TumblingWindowAggregator tests
+   - `test_window_state.py` - WorkerStateManager tests
+
+3. **`tests/detection/`**:
+   - `conftest.py` - Detection test fixtures
+   - `test_threshold.py` - ThresholdDetector tests
+
+4. **`tests/processor/`** (slimmed):
+   - `conftest.py` - Processor test fixtures
+   - `test_worker.py` - TelemetryWorker tests
+   - `test_integration.py` - End-to-end integration tests
+
+**Files Removed:**
+   - `src/streams/backpressure.py` - Moved to consumers/
+
+**File Operations Summary:**
+- 35 files changed
+- 15 files moved/renamed
+- 21 new files created (models, exceptions, __init__.py, py.typed, tests)
+- 1 file deleted (streams/backpressure.py)
+
+**Commit:** `9ec465f` - "Refactor: Extract processor into reusable libraries"
+
+---
+
+## Interaction 20: Import Path Verification and Fixes
+**Tool:** GitHub Copilot (Claude Sonnet 4.5)
+**Mode:** Chat (design placeholder stubs mode)
+**Instructions File:** `.github/copilot-instructions.md`
+**Purpose:** Comprehensive verification of library extraction to ensure all imports are correct, stubs have proper typing, and structure matches documented architecture
+
+### Context
+After library extraction refactoring, user requested final verification to ensure stub correctness, proper typing, import consistency, and alignment with architecture documentation.
+
+### Prompt
+```
+Perfect. I want you to do one more look at the source and test directories. Make sure it matches with the design and architecture and markdown files. Another thing is too, I want you to make sure that the stubs are correct, verify those stubs are correct, and the overall design in the actual code itself, the stubs, to ensure that they're all cohesive and have the correct typing and no errors.
+```
+
+### AI Response
+Conducted systematic verification of library extraction and discovered critical import issues. All moved files retained old import paths referencing `src.processor.*` and `src.streams.backpressure`, causing import errors. Fixed 11 incorrect import statements across all three libraries, updated model names, fixed async mismatches, added missing type parameters, removed unused imports, and cleaned up formatting.
+
+**Critical Issues Discovered:**
+
+1. **Import Path Errors in consumers/ (5 imports)**:
+   - `consumers/consumer.py` line 13: `from src.processor.deserializer` → `from src.consumers.deserializer`
+   - `consumers/consumer.py` line 14: `from src.processor.error_handler` → `from src.consumers.error_handler`
+   - `consumers/consumer.py` line 15: `from src.streams.backpressure` → `from src.consumers.backpressure`
+   - `consumers/error_handler.py` line 12: `from src.processor.exceptions` → `from src.consumers.exceptions`
+   - `consumers/deserializer.py` line 12: `from src.processor.exceptions` → `from src.consumers.exceptions`
+
+2. **Import Path Errors in aggregation/ (3 imports)**:
+   - `aggregation/tumbling_window.py` line 11: `from src.processor.base_aggregator` → `from src.aggregation.base_aggregator`
+   - `aggregation/tumbling_window.py` line 12: `from src.processor.models` → `from src.aggregation.models`
+   - `aggregation/base_aggregator.py` line 16: `from src.processor.models` → `from src.aggregation.models`
+
+3. **Import Path Errors in detection/ (3 imports)**:
+   - `detection/threshold.py` line 9: `from src.processor.base_detector` → `from src.detection.base_detector`
+   - `detection/threshold.py` line 10: `from src.processor.models` → uses `src.aggregation.models` and `src.detection.models`
+   - `detection/base_detector.py` line 15: `from src.processor.models` → uses `src.aggregation.models`
+
+4. **Duplicate File**: Found backpressure.py in both `streams/` (997 bytes, old) and `consumers/` (3282 bytes, new)
+
+5. **Model Name Issues**: Code used old names (`AggregatedMetric`, `WindowState`) instead of new generic names (`WindowMetrics`, `WindowBounds`)
+
+6. **Exception Name Mismatch**: `MaxRetriesExceededError` vs `RetryExhaustedError`
+
+7. **Async Mismatch**: `BaseAggregator.aggregate()` not async while `TumblingWindowAggregator.aggregate()` was async
+
+8. **Missing Type Parameters**: Generic `dict` types missing type parameters
+
+9. **Python 3.11 Compatibility**: `from datetime import UTC` not available pre-3.11
+
+10. **Unused Imports**: 40+ unused imports (logging, datetime, etc.)
+
+11. **Formatting Issues**: 115 whitespace/formatting violations
+
+**Fixes Implemented:**
+
+**Import Path Corrections (11 fixes)**:
+- Fixed all consumers imports to use `src.consumers.*`
+- Fixed all aggregation imports to use `src.aggregation.*`
+- Fixed all detection imports to use `src.detection.*` and `src.aggregation.models`
+- Updated `processor/worker.py` to import from new library locations
+
+**Structural Fixes**:
+- Removed duplicate `streams/backpressure.py`
+- Made `BaseAggregator.aggregate()` async
+- Updated all `WindowMetrics`/`WindowBounds` references
+- Fixed `RetryExhaustedError` usage throughout
+- Added type parameters: `dict[str, object]`, `dict[tuple[str, str, str], WindowBounds]`
+- Fixed UTC import: `from datetime import datetime, timezone` (use `timezone.utc`)
+- Updated `TelemetryConsumer` class name references in `worker.py`
+
+**Code Quality**:
+- Removed 40+ unused imports across 56 files
+- Fixed 115 whitespace/formatting issues (trailing whitespace, blank lines)
+- Updated `Optional[X]` to `X | None` for modern type hints
+- Organized import blocks (ruff I001 fixes)
+
+**Verification Results**:
+- ✅ mypy: Success (0 errors in 56 files)
+- ✅ ruff: 2 warnings (FastAPI `Depends()` usage - idiomatic pattern, can ignore)
+- ✅ Import test: All key imports successful
+- ✅ Structure matches ARCHITECTURE.md exactly
+
+**Final Structure Verified**:
+- `src/consumers/` - 8 files (consumer, deserializer, error_handler, backpressure, models, exceptions, __init__, py.typed)
+- `src/aggregation/` - 7 files (base_aggregator, tumbling_window, window_state, models, exceptions, __init__, py.typed)
+- `src/detection/` - 6 files (base_detector, threshold, models, exceptions, __init__, py.typed)
+- `src/processor/` - 8 files (main, __main__, worker, config, models, exceptions, __init__, py.typed)
+
+**Test Structure Verified**:
+- `tests/consumers/` - conftest.py + 4 test files
+- `tests/aggregation/` - conftest.py + 2 test files
+- `tests/detection/` - conftest.py + 1 test file
+- `tests/processor/` - conftest.py + 2 test files
+
+**Files Modified:**
+- `src/consumers/consumer.py` - Fixed 3 imports
+- `src/consumers/deserializer.py` - Fixed 1 import
+- `src/consumers/error_handler.py` - Fixed 1 import, exception name
+- `src/aggregation/base_aggregator.py` - Fixed 1 import, made async, updated model names
+- `src/aggregation/tumbling_window.py` - Fixed 2 imports, updated model names
+- `src/aggregation/window_state.py` - Added type parameters
+- `src/detection/base_detector.py` - Fixed 1 import, updated model names, fixed UTC import
+- `src/detection/threshold.py` - Fixed 2 imports, updated model names
+- `src/processor/worker.py` - Fixed 3 imports, updated class names
+- Plus 34 files with unused import removal and formatting fixes
+
+**Commit:** `77c1dcc` - "Fix: Update all imports after library extraction"
+
+**Summary**:
+Complete verification pass identified and fixed all import issues from library extraction. Codebase now fully consistent with documented architecture. All imports correct, typing clean (mypy passes), linting clean (ruff passes except 2 idiomatic FastAPI warnings), stubs properly organized and cohesive. Ready for implementation phase.
+
+---
+
+## Interaction 21: Update AI Log
+**Tool:** GitHub Copilot (Claude Sonnet 4.5)
+**Mode:** Chat (design placeholder stubs mode)
+**Instructions File:** `.github/copilot-instructions.md`
+**Purpose:** Document the comprehensive verification and import fix session in AI_LOG.md
+
+### Prompt
+```
+Go ahead and update the AI log.
+  ↓
 Aggregation (domain-agnostic)
   ↓
 Detection (domain-agnostic)

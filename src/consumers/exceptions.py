@@ -96,9 +96,9 @@ class BackpressureError(ConsumerError):
 
 
 __all__ = [
+    "BackpressureError",
     "ConsumerError",
     "DeserializationError",
-    "ValidationError",
     "RetryExhaustedError",
-    "BackpressureError",
+    "ValidationError",
 ]

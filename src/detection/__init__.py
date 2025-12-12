@@ -25,7 +25,7 @@ Example:
 """
 
 __all__ = [
+    "AnomalyResult",
     "BaseDetector",
     "ThresholdDetector",
-    "AnomalyResult",
 ]

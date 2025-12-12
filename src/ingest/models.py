@@ -110,7 +110,7 @@ class HealthResponse:
 
 
 __all__ = [
+    "HealthResponse",
     "IngestRequest",
     "IngestResponse",
-    "HealthResponse",
 ]

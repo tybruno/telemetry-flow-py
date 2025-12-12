@@ -80,8 +80,8 @@ class TelemetryProcessingError(ProcessorError):
 
 
 __all__ = [
-    "ProcessorError",
     "OrchestrationError",
+    "ProcessorError",
     "StateRecoveryError",
     "TelemetryProcessingError",
 ]

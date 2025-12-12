@@ -34,7 +34,7 @@ class ThresholdDetector(BaseDetector):
             result = detector.create_anomaly_result(metric)
     """
 
-    __slots__ = ("_thresholds", "_default_threshold")
+    __slots__ = ("_default_threshold", "_thresholds")
 
     _thresholds: dict[str, float]
     _default_threshold: float

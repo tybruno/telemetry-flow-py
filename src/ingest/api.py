@@ -25,6 +25,9 @@ from src.ingest.service import IngestService
 
 router = APIRouter(prefix="/api/v1", tags=["telemetry"])
 
+# Dependency singletons
+_ingest_service_dependency = Depends(get_ingest_service)
+
 
 @router.post(
     "/telemetry",
@@ -35,7 +38,7 @@ router = APIRouter(prefix="/api/v1", tags=["telemetry"])
 )
 async def ingest_telemetry(
     request: IngestRequest,
-    service: IngestService = Depends(get_ingest_service),
+    service: IngestService = _ingest_service_dependency,
 ) -> IngestResponse:
     """Ingest telemetry data from network devices.
 
@@ -81,7 +84,7 @@ async def ingest_telemetry(
     description="Check service health and dependencies",
 )
 async def health_check(
-    service: IngestService = Depends(get_ingest_service),
+    service: IngestService = _ingest_service_dependency,
 ) -> HealthResponse:
     """Check health of ingest service and dependencies.
 
@@ -106,7 +109,7 @@ async def health_check(
 
 
 __all__ = [
-    "router",
-    "ingest_telemetry",
     "health_check",
+    "ingest_telemetry",
+    "router",
 ]

@@ -72,4 +72,4 @@ class WindowMetrics:
     sum: float
 
 
-__all__ = ["WindowMetrics", "WindowBounds"]
+__all__ = ["WindowBounds", "WindowMetrics"]

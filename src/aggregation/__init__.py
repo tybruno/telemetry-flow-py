@@ -28,6 +28,6 @@ Example:
 __all__ = [
     "BaseAggregator",
     "TumblingWindowAggregator",
-    "WindowMetrics",
     "WindowBounds",
+    "WindowMetrics",
 ]

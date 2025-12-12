@@ -52,13 +52,13 @@ class TelemetryConsumer:
     """
 
     __slots__ = (
-        "_stream",
+        "_backpressure",
+        "_consumer_name",
         "_deserializer",
         "_error_handler",
-        "_backpressure",
-        "_stream_name",
         "_group_name",
-        "_consumer_name",
+        "_stream",
+        "_stream_name",
     )
 
     _stream: StreamProtocol

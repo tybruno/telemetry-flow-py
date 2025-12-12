@@ -78,7 +78,7 @@ class StateError(AggregationError):
 
 __all__ = [
     "AggregationError",
-    "WindowError",
     "InvalidMetricError",
     "StateError",
+    "WindowError",
 ]

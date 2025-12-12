@@ -91,7 +91,7 @@ def initialize_service(stream: StreamProtocol) -> None:
 
 
 __all__ = [
-    "get_stream",
     "get_ingest_service",
+    "get_stream",
     "initialize_service",
 ]

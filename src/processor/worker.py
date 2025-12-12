@@ -43,12 +43,12 @@ class TelemetryWorker:
     """
 
     __slots__ = (
-        "_consumer",
         "_aggregator",
-        "_detector",
-        "_storage",
         "_alerter",
+        "_consumer",
+        "_detector",
         "_running",
+        "_storage",
     )
 
     _consumer: TelemetryConsumer

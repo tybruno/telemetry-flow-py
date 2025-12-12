@@ -32,8 +32,8 @@ Example:
 """
 
 __all__ = [
-    "StreamConsumer",
-    "MessageDeserializer",
-    "ConsumerErrorHandler",
     "BackpressureManager",
+    "ConsumerErrorHandler",
+    "MessageDeserializer",
+    "StreamConsumer",
 ]

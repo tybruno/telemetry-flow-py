@@ -79,7 +79,7 @@ class DetectorNotConfiguredError(DetectionError):
 
 __all__ = [
     "DetectionError",
-    "InvalidThresholdError",
-    "InvalidMetricError",
     "DetectorNotConfiguredError",
+    "InvalidMetricError",
+    "InvalidThresholdError",
 ]

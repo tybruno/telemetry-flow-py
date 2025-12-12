@@ -313,7 +313,7 @@ class AlerterProtocol(Protocol):
 
 
 __all__ = [
-    "StreamProtocol",
-    "StorageProtocol",
     "AlerterProtocol",
+    "StorageProtocol",
+    "StreamProtocol",
 ]

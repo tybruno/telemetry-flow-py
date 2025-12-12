@@ -39,4 +39,4 @@ class Alert:
     timestamp: datetime
 
 
-__all__ = ["AlertSeverity", "Alert"]
+__all__ = ["Alert", "AlertSeverity"]

@@ -19,7 +19,7 @@ class RedisStore(BaseStorage):
         _client: Redis async client.
     """
 
-    __slots__ = ("_url", "_client")
+    __slots__ = ("_client", "_url")
 
     _url: str
     _client: Any  # redis.asyncio.Redis

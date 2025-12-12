@@ -52,7 +52,7 @@ class IngestService:
             )
     """
 
-    __slots__ = ("_stream", "_start_time")
+    __slots__ = ("_start_time", "_stream")
 
     _stream: StreamProtocol
     _start_time: datetime

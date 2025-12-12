@@ -39,7 +39,7 @@ class ConsumerErrorHandler:
         )
     """
 
-    __slots__ = ("_max_retries", "_base_delay", "_max_delay")
+    __slots__ = ("_base_delay", "_max_delay", "_max_retries")
 
     _max_retries: int
     _base_delay: float
