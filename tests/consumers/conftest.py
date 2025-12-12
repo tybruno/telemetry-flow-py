@@ -3,18 +3,20 @@
 Provides test fixtures specific to consumer library testing including
 mock streams, sample messages, and consumer configurations.
 """
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from unittest.mock import Mock, AsyncMock
+
 from src.core.protocols import StreamProtocol
 
 
 @pytest.fixture
 def mock_stream() -> Mock:
     """Mock StreamProtocol implementation for testing.
-    
+
     Returns:
         Mock stream with async methods configured
-        
+
     Example:
         async def test_consumer(mock_stream):
             consumer = StreamConsumer(stream=mock_stream, ...)
@@ -30,10 +32,10 @@ def mock_stream() -> Mock:
 @pytest.fixture
 def sample_message_data() -> dict:
     """Sample raw message data for testing deserialization.
-    
+
     Returns:
         Dictionary representing raw stream message
-        
+
     Example:
         def test_deserialize(sample_message_data):
             event = deserializer.deserialize(sample_message_data)
@@ -45,10 +47,10 @@ def sample_message_data() -> dict:
 @pytest.fixture
 def consumer_config() -> dict:
     """Standard consumer configuration for testing.
-    
+
     Returns:
         Dictionary with consumer configuration values
-        
+
     Example:
         def test_consumer_init(consumer_config):
             consumer = StreamConsumer(**consumer_config)

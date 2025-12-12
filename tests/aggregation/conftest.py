@@ -3,19 +3,20 @@
 Provides test fixtures specific to aggregation library testing including
 sample metrics, window configurations, and mock storage.
 """
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from unittest.mock import Mock, AsyncMock
-from datetime import datetime, UTC
+
 from src.core.protocols import StorageProtocol
 
 
 @pytest.fixture
 def mock_storage() -> Mock:
     """Mock StorageProtocol implementation for testing.
-    
+
     Returns:
         Mock storage with async methods configured
-        
+
     Example:
         async def test_aggregator(mock_storage):
             aggregator = TumblingWindowAggregator(storage=mock_storage, ...)
@@ -31,10 +32,10 @@ def mock_storage() -> Mock:
 @pytest.fixture
 def sample_numeric_values() -> list[float]:
     """Sample numeric values for aggregation testing.
-    
+
     Returns:
         List of sample metric values
-        
+
     Example:
         def test_calculate_average(sample_numeric_values):
             avg = calculate_average(sample_numeric_values)
@@ -46,10 +47,10 @@ def sample_numeric_values() -> list[float]:
 @pytest.fixture
 def window_config() -> dict:
     """Standard window configuration for testing.
-    
+
     Returns:
         Dictionary with window size and related settings
-        
+
     Example:
         def test_aggregator_init(window_config):
             aggregator = TumblingWindowAggregator(**window_config)

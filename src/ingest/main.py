@@ -91,7 +91,7 @@ async def shutdown_event() -> None:
     raise NotImplementedError
 
 
-def main() -> None:
+def main() -> int:
     """Main entry point for the ingest service.
 
     Loads configuration from environment variables and config files,
@@ -107,6 +107,13 @@ def main() -> None:
         - FastAPI HTTP server (uvicorn)
         - Redis Streams connection
         - IngestService with dependency injection
+
+    Returns:
+        Exit code:
+            - 0: Success - service shutdown cleanly
+            - 1: Configuration error - missing or invalid configuration
+            - 2: Connection error - failed to connect to Redis
+            - 3: Runtime error - unexpected error during operation
 
     Example:
         Running the service::
@@ -126,7 +133,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    sys.exit(main())
 
 
 __all__ = [

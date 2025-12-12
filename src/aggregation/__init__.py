@@ -25,6 +25,10 @@ Example:
             print(f"Window complete: avg={result.average}")
 """
 
+from src.aggregation.base_aggregator import BaseAggregator
+from src.aggregation.models import WindowBounds, WindowMetrics
+from src.aggregation.tumbling_window import TumblingWindowAggregator
+
 __all__ = [
     "BaseAggregator",
     "TumblingWindowAggregator",

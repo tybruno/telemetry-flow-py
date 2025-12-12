@@ -76,7 +76,7 @@ async def run_worker() -> None:
     raise NotImplementedError
 
 
-def main() -> None:
+def main() -> int:
     """Main entry point for the processor service.
 
     Loads configuration from environment variables and config files,
@@ -88,6 +88,14 @@ def main() -> None:
         - PROCESSOR_MAX_RETRIES: Max retry attempts for failures (default: 3)
         - PROCESSOR_CONSUMER_GROUP: Consumer group name (default: telemetry-processors)
         - REDIS_URL: Redis connection URL (required)
+
+    Returns:
+        Exit code:
+            - 0: Success - worker shutdown cleanly
+            - 1: Configuration error - missing or invalid configuration
+            - 2: Connection error - failed to connect to Redis/streams
+            - 3: Processing error - unrecoverable error during processing
+            - 4: State recovery error - failed to restore worker state
 
     Example:
         Running with custom configuration::
@@ -108,7 +116,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    sys.exit(main())
 
 
 __all__ = ["main", "run_worker"]

@@ -5,7 +5,7 @@ error handling, message processing, and backpressure management. It can be
 used by any service that needs to consume messages from streaming platforms.
 
 Classes:
-    StreamConsumer: Generic stream consumer with composition pattern
+    TelemetryConsumer: Generic stream consumer with composition pattern
     MessageDeserializer: Message parsing and validation
     ConsumerErrorHandler: Exponential backoff retry logic
     BackpressureManager: Rate limiting and backpressure management
@@ -13,10 +13,10 @@ Classes:
 Example:
     Basic consumer setup::
 
-        from consumers import StreamConsumer
+        from consumers import TelemetryConsumer
         from core.protocols import StreamProtocol
 
-        consumer = StreamConsumer(
+        consumer = TelemetryConsumer(
             stream=stream_implementation,
             deserializer=deserializer,
             error_handler=error_handler,
@@ -31,9 +31,14 @@ Example:
             await consumer.acknowledge(message.id)
 """
 
+from src.consumers.backpressure import BackpressureManager
+from src.consumers.consumer import TelemetryConsumer
+from src.consumers.deserializer import MessageDeserializer
+from src.consumers.error_handler import ConsumerErrorHandler
+
 __all__ = [
     "BackpressureManager",
     "ConsumerErrorHandler",
     "MessageDeserializer",
-    "StreamConsumer",
+    "TelemetryConsumer",
 ]

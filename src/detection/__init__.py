@@ -24,8 +24,13 @@ Example:
             print(f"Anomaly detected: {result.description}")
 """
 
+from src.detection.base_detector import BaseDetector
+from src.detection.models import AnomalyResult, AnomalySeverity
+from src.detection.threshold import ThresholdDetector
+
 __all__ = [
     "AnomalyResult",
+    "AnomalySeverity",
     "BaseDetector",
     "ThresholdDetector",
 ]
