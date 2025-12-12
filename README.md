@@ -1,5 +1,11 @@
 # Network Telemetry Processing - Take Home Assignment
 
+[![CI](https://github.com/tyhartma/take_home/actions/workflows/ci.yml/badge.svg)](https://github.com/tyhartma/take_home/actions/workflows/ci.yml)
+[![Tests](https://github.com/tyhartma/take_home/actions/workflows/tests.yml/badge.svg)](https://github.com/tyhartma/take_home/actions/workflows/tests.yml)
+[![Lint](https://github.com/tyhartma/take_home/actions/workflows/lint.yml/badge.svg)](https://github.com/tyhartma/take_home/actions/workflows/lint.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+
 ## Quick Start
 
 1. **Read the Assignment**: See [ASSIGNMENT.md](./ASSIGNMENT.md) for complete requirements
