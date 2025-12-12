@@ -11,7 +11,7 @@ Classes:
 
 Example:
     Handling aggregation exceptions::
-    
+
         try:
             result = await aggregator.aggregate(event)
         except InvalidMetricError as e:
@@ -24,10 +24,10 @@ from src.core.exceptions import TelemetryError
 
 class AggregationError(TelemetryError):
     """Base exception for all aggregation-related errors.
-    
+
     All aggregation exceptions inherit from this base, allowing catch-all
     exception handling when needed.
-    
+
     Example:
         try:
             await aggregator.process()
@@ -38,10 +38,10 @@ class AggregationError(TelemetryError):
 
 class WindowError(AggregationError):
     """Raised when window operations fail.
-    
+
     Indicates problems with window boundary calculations, window state
     management, or window transitions.
-    
+
     Example:
         if window_end <= window_start:
             raise WindowError(
@@ -52,10 +52,10 @@ class WindowError(AggregationError):
 
 class InvalidMetricError(AggregationError):
     """Raised when metric data is invalid for aggregation.
-    
+
     Metric values don't meet requirements (e.g., non-numeric, negative
     when positive required, out of valid range).
-    
+
     Example:
         if not isinstance(value, (int, float)):
             raise InvalidMetricError(
@@ -66,10 +66,10 @@ class InvalidMetricError(AggregationError):
 
 class StateError(AggregationError):
     """Raised when window state operations fail.
-    
+
     Problems persisting or retrieving window state from storage,
     or state corruption detected.
-    
+
     Example:
         if state is None:
             raise StateError(f"Failed to retrieve state for window {key}")

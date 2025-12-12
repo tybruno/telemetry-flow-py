@@ -4,12 +4,11 @@ Class:
     TumblingWindowAggregator: Tumbling window aggregation.
 """
 
-import logging as _log
 from datetime import timedelta
 
+from src.aggregation.base_aggregator import BaseAggregator
+from src.aggregation.models import WindowBounds, WindowMetrics
 from src.core.models import TelemetryEvent
-from src.processor.base_aggregator import BaseAggregator
-from src.processor.models import AggregatedMetric, WindowState
 
 
 class TumblingWindowAggregator(BaseAggregator):
@@ -38,7 +37,7 @@ class TumblingWindowAggregator(BaseAggregator):
 
     _window_size: int
     _window_delta: timedelta
-    _windows: dict[tuple[str, str, str], WindowState]
+    _windows: dict[tuple[str, str, str], WindowBounds]
 
     def __init__(self, *, window_size: int) -> None:
         """Initialize aggregator with window size.
@@ -51,14 +50,14 @@ class TumblingWindowAggregator(BaseAggregator):
         """
         raise NotImplementedError
 
-    async def aggregate(self, event: TelemetryEvent) -> AggregatedMetric | None:
+    async def aggregate(self, event: TelemetryEvent) -> WindowMetrics | None:
         """Aggregate event into time window.
 
         Args:
             event: Telemetry event to aggregate.
 
         Returns:
-            AggregatedMetric if window completed, None if still accumulating.
+            WindowMetrics if window completed, None if still accumulating.
         """
         raise NotImplementedError
 

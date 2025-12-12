@@ -4,12 +4,10 @@ Class:
     MessageDeserializer: Deserializes raw stream data to TelemetryEvent.
 """
 
-import logging as _log
 from datetime import datetime
 from typing import Any
 
 from src.core.models import TelemetryEvent
-from src.processor.exceptions import DeserializationError
 
 
 class MessageDeserializer:

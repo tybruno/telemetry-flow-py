@@ -4,7 +4,6 @@ Class:
     RedisStream: Redis Streams implementation of StreamProtocol.
 """
 
-import logging as _log
 from collections.abc import AsyncIterator
 from typing import Any
 

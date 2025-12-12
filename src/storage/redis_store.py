@@ -4,7 +4,6 @@ Class:
     RedisStore: Redis implementation of StorageProtocol.
 """
 
-import logging as _log
 from typing import Any
 
 from src.storage.base import BaseStorage

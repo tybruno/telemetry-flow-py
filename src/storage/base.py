@@ -8,9 +8,8 @@ Classes:
     BaseStorage: Abstract base class for storage implementations.
 """
 
-import logging as _log
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 
 class BaseStorage(ABC):
@@ -37,9 +36,9 @@ class BaseStorage(ABC):
                 raise NotImplementedError
     """
 
-    _connection: Optional[object]
+    _connection: object | None
 
-    def __init__(self, connection: Optional[object] = None) -> None:
+    def __init__(self, connection: object | None = None) -> None:
         """Initialize base storage with optional connection.
 
         Args:
@@ -65,7 +64,7 @@ class BaseStorage(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def retrieve(self, key: str) -> Optional[Any]:
+    async def retrieve(self, key: str) -> Any | None:
         """Retrieve a value by key.
 
         Must be implemented by concrete classes to handle storage-specific

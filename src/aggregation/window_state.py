@@ -4,7 +4,6 @@ Class:
     WorkerStateManager: Manages worker state persistence.
 """
 
-import logging as _log
 
 from src.core.protocols import StorageProtocol
 
@@ -33,7 +32,7 @@ class WorkerStateManager:
         """Initialize state manager."""
         raise NotImplementedError
 
-    async def save_state(self, state: dict) -> None:
+    async def save_state(self, state: dict[str, object]) -> None:
         """Save worker state.
 
         Args:
@@ -41,7 +40,7 @@ class WorkerStateManager:
         """
         raise NotImplementedError
 
-    async def load_state(self) -> dict | None:
+    async def load_state(self) -> dict[str, object] | None:
         """Load worker state.
 
         Returns:

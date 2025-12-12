@@ -5,14 +5,13 @@ Class:
         backpressure, error handling, and retries.
 """
 
-import logging as _log
 from collections.abc import AsyncIterator
 
+from src.consumers.backpressure import BackpressureManager
+from src.consumers.deserializer import MessageDeserializer
+from src.consumers.error_handler import ConsumerErrorHandler
 from src.core.models import TelemetryEvent
 from src.core.protocols import StreamProtocol
-from src.processor.deserializer import MessageDeserializer
-from src.processor.error_handler import ConsumerErrorHandler
-from src.streams.backpressure import BackpressureManager
 
 
 class TelemetryConsumer:

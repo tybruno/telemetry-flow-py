@@ -4,12 +4,11 @@ Class:
     TelemetryWorker: Main processor worker orchestrating the pipeline.
 """
 
-import logging as _log
 
+from src.aggregation.tumbling_window import TumblingWindowAggregator
+from src.consumers.consumer import TelemetryConsumer
 from src.core.protocols import AlerterProtocol, StorageProtocol
-from src.processor.aggregator import TumblingWindowAggregator
-from src.processor.consumer import TelemetryConsumer
-from src.processor.detector import ThresholdDetector
+from src.detection.threshold import ThresholdDetector
 
 
 class TelemetryWorker:

@@ -11,14 +11,14 @@ Classes:
 
 Example:
     Basic detection setup::
-    
+
         from detection import ThresholdDetector, AnomalyResult
         from aggregation import WindowMetrics
-        
+
         detector = ThresholdDetector(
             thresholds={"cpu": 80.0, "memory": 90.0}
         )
-        
+
         result = await detector.detect(window_metrics)
         if result and result.is_anomaly:
             print(f"Anomaly detected: {result.description}")

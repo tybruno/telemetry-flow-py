@@ -9,23 +9,23 @@ Classes:
 """
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class ConsumerMessage:
     """Wrapper for consumed stream messages.
-    
+
     Provides a standardized interface for messages consumed from various
     streaming platforms.
-    
+
     Attributes:
         message_id: Unique identifier for the message
         stream_name: Name of the source stream
         data: Raw message data (not yet deserialized)
         timestamp: When message was consumed
         retry_count: Number of times this message has been retried
-    
+
     Example:
         message = ConsumerMessage(
             message_id="1234567890-0",
@@ -45,9 +45,9 @@ class ConsumerMessage:
 @dataclass(frozen=True, kw_only=True, slots=True)
 class ConsumerState:
     """Consumer state tracking information.
-    
+
     Tracks internal consumer state for monitoring and debugging.
-    
+
     Attributes:
         consumer_name: Unique name of this consumer
         group_name: Consumer group this consumer belongs to
@@ -55,7 +55,7 @@ class ConsumerState:
         messages_failed: Total messages that failed processing
         last_message_id: ID of last successfully processed message
         is_running: Whether consumer is currently active
-    
+
     Example:
         state = ConsumerState(
             consumer_name="worker-01",
@@ -70,7 +70,7 @@ class ConsumerState:
     group_name: str
     messages_processed: int
     messages_failed: int
-    last_message_id: Optional[str]
+    last_message_id: str | None
     is_running: bool
 
 

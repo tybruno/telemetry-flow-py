@@ -8,12 +8,11 @@ Classes:
     BaseAggregator: Abstract base class for aggregator implementations.
 """
 
-import logging as _log
 from abc import ABC, abstractmethod
 from datetime import datetime
 
+from src.aggregation.models import WindowMetrics
 from src.core.models import TelemetryEvent
-from src.processor.models import AggregatedMetric
 
 
 class BaseAggregator(ABC):
@@ -33,7 +32,7 @@ class BaseAggregator(ABC):
 
     Example:
         class TumblingWindowAggregator(BaseAggregator):
-            def aggregate(self, event: TelemetryEvent) -> AggregatedMetric | None:
+            def aggregate(self, event: TelemetryEvent) -> WindowMetrics | None:
                 window_key = self._generate_window_key(
                     event.device_id,
                     event.interface,
@@ -57,7 +56,7 @@ class BaseAggregator(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def aggregate(self, event: TelemetryEvent) -> AggregatedMetric | None:
+    async def aggregate(self, event: TelemetryEvent) -> WindowMetrics | None:
         """Aggregate telemetry event into time window.
 
         Must be implemented by concrete classes to provide specific

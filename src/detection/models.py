@@ -11,15 +11,14 @@ Classes:
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 
 class AnomalySeverity(Enum):
     """Severity levels for detected anomalies.
-    
+
     Classifies anomalies by their criticality for proper alerting and
     response prioritization.
-    
+
     Example:
         if threshold_exceeded > 2.0:
             severity = AnomalySeverity.CRITICAL
@@ -35,10 +34,10 @@ class AnomalySeverity(Enum):
 @dataclass(frozen=True, kw_only=True, slots=True)
 class AnomalyResult:
     """Generic anomaly detection result.
-    
+
     Domain-agnostic container for anomaly information detected from any
     metric stream. Includes severity, confidence, and contextual data.
-    
+
     Attributes:
         is_anomaly: Whether an anomaly was detected
         severity: Classification of anomaly criticality
@@ -48,7 +47,7 @@ class AnomalyResult:
         metric_value: The actual metric value that triggered detection
         threshold_value: The threshold that was exceeded (if applicable)
         context: Additional context data specific to detection strategy
-    
+
     Example:
         result = AnomalyResult(
             is_anomaly=True,
@@ -67,8 +66,8 @@ class AnomalyResult:
     description: str
     detected_at: datetime
     metric_value: float
-    threshold_value: Optional[float] = None
-    context: Optional[dict[str, float]] = None
+    threshold_value: float | None = None
+    context: dict[str, float] | None = None
 
 
 __all__ = ["AnomalyResult", "AnomalySeverity"]

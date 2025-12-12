@@ -12,7 +12,7 @@ Classes:
 
 Example:
     Handling processor exceptions::
-    
+
         try:
             await worker.process_event(event)
         except TelemetryProcessingError as e:
@@ -26,9 +26,9 @@ from src.core.exceptions import TelemetryError
 
 class ProcessorError(TelemetryError):
     """Base exception for processor service errors.
-    
+
     All processor service exceptions inherit from this base.
-    
+
     Example:
         try:
             await processor.run()
@@ -39,10 +39,10 @@ class ProcessorError(TelemetryError):
 
 class OrchestrationError(ProcessorError):
     """Worker orchestration failure.
-    
+
     Raised when coordinating between consumer, aggregation, detection,
     storage, and alerting components fails.
-    
+
     Example:
         if not all([consumer, aggregator, detector]):
             raise OrchestrationError(
@@ -53,10 +53,10 @@ class OrchestrationError(ProcessorError):
 
 class StateRecoveryError(ProcessorError):
     """Worker state recovery failure.
-    
+
     Raised when worker cannot recover its state after restart or failure,
     preventing it from resuming processing safely.
-    
+
     Example:
         if not recovered_state:
             raise StateRecoveryError(
@@ -67,10 +67,10 @@ class StateRecoveryError(ProcessorError):
 
 class TelemetryProcessingError(ProcessorError):
     """Telemetry-specific processing error.
-    
+
     Raised when telemetry event processing fails in a way specific to
     the telemetry domain (e.g., invalid device ID format, unknown metric).
-    
+
     Example:
         if not is_valid_device_id(event.device_id):
             raise TelemetryProcessingError(

@@ -16,18 +16,10 @@ Example:
         uvicorn.run(app, host="0.0.0.0", port=8000)
 """
 
-import logging as _log
-from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, status
 
 from src.ingest.dependencies import get_ingest_service
-from src.ingest.exceptions import (
-    InvalidPayloadError,
-    ServiceUnavailableError,
-    StreamPublishError,
-)
 from src.ingest.models import HealthResponse, IngestRequest, IngestResponse
 from src.ingest.service import IngestService
 

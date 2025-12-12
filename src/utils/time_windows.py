@@ -4,7 +4,7 @@ Functions:
     calculate_window_bounds: Calculate window start/end times.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 def calculate_window_bounds(

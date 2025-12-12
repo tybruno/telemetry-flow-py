@@ -12,10 +12,10 @@ Classes:
 
 Example:
     Basic consumer setup::
-    
+
         from consumers import StreamConsumer
         from core.protocols import StreamProtocol
-        
+
         consumer = StreamConsumer(
             stream=stream_implementation,
             deserializer=deserializer,
@@ -25,7 +25,7 @@ Example:
             group_name="processors",
             consumer_name="worker-01"
         )
-        
+
         async for message in consumer.consume():
             # Process message
             await consumer.acknowledge(message.id)

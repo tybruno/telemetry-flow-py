@@ -12,14 +12,14 @@ Classes:
 
 Example:
     Basic aggregation setup::
-    
+
         from aggregation import TumblingWindowAggregator, WindowMetrics
-        
+
         aggregator = TumblingWindowAggregator(
             window_size_seconds=60,
             storage=storage_implementation
         )
-        
+
         result = await aggregator.aggregate(event)
         if result:
             print(f"Window complete: avg={result.average}")

@@ -4,7 +4,6 @@ Class:
     ConsoleAlerter: Console output alerter.
 """
 
-import logging as _log
 from typing import Any
 
 

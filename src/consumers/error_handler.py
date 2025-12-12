@@ -4,16 +4,8 @@ Class:
     ConsumerErrorHandler: Handles errors and retries for message processing.
 """
 
-import logging as _log
 from collections.abc import Awaitable, Callable
-from contextlib import suppress
 from typing import Any, TypeVar
-
-from src.processor.exceptions import (
-    DeserializationError,
-    MaxRetriesExceededError,
-    ProcessorError,
-)
 
 T = TypeVar("T")
 
@@ -92,8 +84,8 @@ class ConsumerErrorHandler:
             Result from successful operation execution.
 
         Raises:
-            MaxRetriesExceededError: If all retry attempts fail.
-            ProcessorError: For non-retryable errors.
+            RetryExhaustedError: If all retry attempts fail.
+            ConsumerError: For non-retryable errors.
 
         Example:
             async def parse_event(raw_data):

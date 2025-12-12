@@ -23,7 +23,6 @@ from datetime import datetime, timezone
 
 from src.core.models import TelemetryEvent
 from src.core.protocols import StreamProtocol
-from src.ingest.exceptions import InvalidPayloadError, StreamPublishError
 from src.ingest.models import IngestRequest, IngestResponse
 
 

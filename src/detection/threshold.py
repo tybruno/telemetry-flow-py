@@ -4,10 +4,10 @@ Class:
     ThresholdDetector: Metric-specific threshold-based detector.
 """
 
-import logging as _log
 
-from src.processor.base_detector import BaseDetector
-from src.processor.models import AggregatedMetric, AnomalyResult
+from src.aggregation.models import WindowMetrics
+from src.detection.base_detector import BaseDetector
+from src.detection.models import AnomalyResult
 
 
 class ThresholdDetector(BaseDetector):
@@ -56,7 +56,7 @@ class ThresholdDetector(BaseDetector):
         """
         raise NotImplementedError
 
-    def is_anomaly(self, metric: AggregatedMetric) -> bool:
+    def is_anomaly(self, metric: WindowMetrics) -> bool:
         """Check if aggregated metric is anomalous.
 
         Args:
@@ -69,7 +69,7 @@ class ThresholdDetector(BaseDetector):
 
     def create_anomaly_result(
         self,
-        metric: AggregatedMetric,
+        metric: WindowMetrics,
     ) -> AnomalyResult:
         """Create anomaly result from metric.
 

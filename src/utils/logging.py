@@ -4,7 +4,6 @@ Functions:
     setup_logging: Configure structured logging.
 """
 
-import logging
 
 
 def setup_logging(*, log_level: str = "INFO") -> None:

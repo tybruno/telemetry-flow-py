@@ -28,22 +28,19 @@ Example:
 
         # Direct module execution
         python -m src.ingest.main
-        
+
         # Console script (after pip install -e .)
         telemetry-ingest
 
         # Via Docker Compose
         docker-compose up ingest
-        
+
         # Service listens on http://localhost:8000
         # POST to http://localhost:8000/telemetry
 """
 
-import logging as _log
 
 from fastapi import FastAPI
-
-from src.ingest.api import router
 
 
 def create_app() -> FastAPI:
@@ -100,12 +97,12 @@ def main() -> None:
     Loads configuration from environment variables and config files,
     creates the FastAPI app with all dependencies, and starts the
     uvicorn ASGI server.
-    
+
     Configuration:
         - INGEST_API_HOST: Host to bind (default: 0.0.0.0)
         - INGEST_API_PORT: Port to bind (default: 8000)
         - REDIS_URL: Redis connection URL (required)
-    
+
     Services Started:
         - FastAPI HTTP server (uvicorn)
         - Redis Streams connection
@@ -116,13 +113,13 @@ def main() -> None:
 
             # With defaults (recommended)
             python -m src.ingest
-            
+
             # Or with console script
             telemetry-ingest
-            
+
             # With custom port
             INGEST_API_PORT=9000 python -m src.ingest
-            
+
             # Service available at http://localhost:8000/telemetry
     """
     raise NotImplementedError

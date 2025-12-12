@@ -18,7 +18,6 @@ Example:
             return await service.ingest_telemetry(request)
 """
 
-import logging as _log
 
 from src.core.protocols import StreamProtocol
 from src.ingest.service import IngestService
