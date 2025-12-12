@@ -6,12 +6,13 @@ Class:
 
 import logging
 
+from src.processor.base_detector import BaseDetector
 from src.processor.models import AggregatedMetric, AnomalyResult
 
 _log = logging.getLogger(__name__)
 
 
-class ThresholdDetector:
+class ThresholdDetector(BaseDetector):
     """Metric-specific threshold-based anomaly detector.
 
     Compares metrics against per-metric thresholds with fallback

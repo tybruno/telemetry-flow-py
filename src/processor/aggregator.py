@@ -8,12 +8,13 @@ import logging
 from datetime import timedelta
 
 from src.core.models import TelemetryEvent
+from src.processor.base_aggregator import BaseAggregator
 from src.processor.models import AggregatedMetric, WindowState
 
 _log = logging.getLogger(__name__)
 
 
-class TumblingWindowAggregator:
+class TumblingWindowAggregator(BaseAggregator):
     """Tumbling window aggregator for telemetry metrics.
 
     Aggregates metrics over fixed-size time windows without overlap.

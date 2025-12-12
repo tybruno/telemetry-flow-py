@@ -400,9 +400,9 @@ from telemetry_streams.models import StreamMessage
 
 ## Protocol-Driven Architecture
 
-### Why Protocols Over Abstract Base Classes?
+### Why Protocols as Primary Contracts?
 
-**Decision**: Use Python protocols (PEP 544 structural typing) instead of ABCs.
+**Decision**: Use Python protocols (PEP 544 structural typing) as primary contracts, supplemented by abstract base classes for shared implementation.
 
 **Justification**:
 
@@ -411,6 +411,7 @@ from telemetry_streams.models import StreamMessage
 3. **No Coupling**: Implementations don't need to inherit from a base class
 4. **Easier Testing**: Mock objects automatically satisfy protocols
 5. **Third-Party Integration**: External libraries can implement our protocols without modification
+6. **Flexible Extension**: Abstract base classes provide optional shared implementation
 
 **Example**:
 ```python
@@ -492,6 +493,214 @@ class RedisStream:
 - Can have multiple protocol implementations side-by-side
 - Easy to add new protocols without modifying existing code
 - Encourages composition over inheritance
+
+### Hybrid Approach: Protocols + Abstract Base Classes
+
+**Decision**: Use protocols for contracts AND abstract base classes for shared implementation logic.
+
+**Justification**:
+
+While protocols provide flexibility through structural typing, abstract base classes (ABCs) enable code reuse when multiple implementations share common logic. We use both:
+
+- **Protocols**: Define contracts for type checking and flexibility
+- **ABCs**: Provide shared implementation for concrete classes
+
+**When to Use Each**:
+
+| Pattern | Use Case | Example |
+|---------|----------|---------|
+| **Protocol Only** | Flexible contracts, varied implementations | `AlerterProtocol` (console, email, PagerDuty) |
+| **Protocol + ABC** | Shared validation/utilities, similar implementations | `StorageProtocol` + `BaseStorage` |
+| **ABC Only** | Strict inheritance, internal implementations | Rare in this codebase |
+
+**Benefits of Hybrid Approach**:
+1. **Type Flexibility**: Protocols allow any implementation (even third-party)
+2. **Code Reuse**: ABCs eliminate duplication in similar implementations
+3. **Best of Both**: Contract validation + implementation efficiency
+
+**Example - Storage with Shared Validation**:
+
+```python
+# core/protocols.py - Contract definition
+class StorageProtocol(Protocol):
+    """Contract for state storage operations."""
+    
+    async def store(self, key: str, value: Any) -> None: ...
+    async def retrieve(self, key: str) -> Optional[Any]: ...
+
+# storage/base.py - Shared implementation logic
+from abc import ABC, abstractmethod
+
+class BaseStorage(ABC):
+    """Abstract base class with shared validation and logging."""
+    
+    @abstractmethod
+    async def store(self, key: str, value: Any) -> None:
+        """Store value - must be implemented by concrete classes."""
+        raise NotImplementedError
+    
+    @abstractmethod
+    async def retrieve(self, key: str) -> Optional[Any]:
+        """Retrieve value - must be implemented by concrete classes."""
+        raise NotImplementedError
+    
+    def _validate_key(self, key: str) -> None:
+        """Shared validation logic for all storage implementations."""
+        if not key or not key.strip():
+            _log.error("Invalid storage key: empty or whitespace-only")
+            raise ValueError("Storage key cannot be empty")
+        
+        if len(key) > 255:
+            _log.error("Invalid storage key: exceeds 255 characters")
+            raise ValueError("Storage key too long")
+    
+    def _log_operation(self, operation: str, key: str) -> None:
+        """Shared logging utility for consistent monitoring."""
+        _log.debug("Storage operation: %s on key=%s", operation, key)
+
+# storage/redis_store.py - Concrete implementation
+class RedisStore(BaseStorage):
+    """Redis storage inheriting shared validation and logging."""
+    
+    async def store(self, key: str, value: Any) -> None:
+        self._validate_key(key)  # Inherited validation
+        self._log_operation("store", key)  # Inherited logging
+        # Redis-specific implementation
+        await self._client.set(key, json.dumps(value))
+    
+    async def retrieve(self, key: str) -> Optional[Any]:
+        self._validate_key(key)  # Inherited validation
+        self._log_operation("retrieve", key)  # Inherited logging
+        # Redis-specific implementation
+        data = await self._client.get(key)
+        return json.loads(data) if data else None
+
+# Type checker validates:
+# ✅ RedisStore inherits from BaseStorage (implementation reuse)
+# ✅ RedisStore satisfies StorageProtocol (structural typing)
+```
+
+**Example - Detector with Shared Formatting**:
+
+```python
+# processor/base_detector.py
+class BaseDetector(ABC):
+    """Shared utilities for anomaly detectors."""
+    
+    @abstractmethod
+    def detect(self, metric: AggregatedMetric) -> Anomaly | None:
+        """Detect anomalies - algorithm-specific."""
+        raise NotImplementedError
+    
+    def _validate_metric(self, metric: AggregatedMetric) -> None:
+        """Shared validation for all detector types."""
+        if metric.value < 0:
+            raise ValueError("Metric value cannot be negative")
+    
+    def _create_anomaly(
+        self,
+        metric: AggregatedMetric,
+        severity: str,
+        description: str,
+        confidence: float = 1.0
+    ) -> Anomaly:
+        """Shared anomaly creation with consistent formatting."""
+        return Anomaly(
+            device_id=metric.device_id,
+            interface=metric.interface,
+            metric_name=metric.metric_name,
+            severity=severity,
+            description=description,
+            confidence=confidence,
+            timestamp=datetime.now(UTC)
+        )
+
+# processor/detector.py
+class ThresholdDetector(BaseDetector):
+    """Threshold-based detector with shared utilities."""
+    
+    def detect(self, metric: AggregatedMetric) -> Anomaly | None:
+        self._validate_metric(metric)  # Inherited validation
+        
+        threshold = self._get_threshold(metric.metric_name)
+        if metric.value > threshold:
+            return self._create_anomaly(  # Inherited formatting
+                metric=metric,
+                severity="high",
+                description=f"{metric.metric_name} exceeded {threshold}",
+                confidence=0.95
+            )
+        return None
+```
+
+**Example - Aggregator with Shared Window Math**:
+
+```python
+# processor/base_aggregator.py
+class BaseAggregator(ABC):
+    """Shared window management utilities."""
+    
+    @abstractmethod
+    def aggregate(self, event: TelemetryEvent) -> AggregatedMetric | None:
+        """Aggregate events - strategy-specific."""
+        raise NotImplementedError
+    
+    def _generate_window_key(
+        self,
+        device_id: str,
+        interface: str,
+        metric_name: str
+    ) -> tuple[str, str, str]:
+        """Shared key generation for consistent window tracking."""
+        return (device_id, interface, metric_name)
+    
+    def _align_to_window_start(self, timestamp: datetime) -> datetime:
+        """Shared timestamp alignment to window boundaries."""
+        epoch = timestamp.timestamp()
+        aligned_epoch = (epoch // self._window_size_seconds) * self._window_size_seconds
+        return datetime.fromtimestamp(aligned_epoch, UTC)
+
+# processor/aggregator.py
+class TumblingWindowAggregator(BaseAggregator):
+    """Tumbling window with shared utilities."""
+    
+    def aggregate(self, event: TelemetryEvent) -> AggregatedMetric | None:
+        key = self._generate_window_key(  # Inherited key generation
+            event.device_id,
+            event.interface,
+            event.metric_name
+        )
+        window_start = self._align_to_window_start(event.timestamp)  # Inherited alignment
+        # Tumbling window-specific logic
+        return aggregated_metric
+```
+
+**Why Not Use ABCs Everywhere?**
+
+We avoid pure ABC inheritance when:
+1. **Implementations vary significantly**: Alert mechanisms (console vs email vs webhook) have little shared logic
+2. **Third-party integration**: External libraries can't inherit from our ABCs but can satisfy our protocols
+3. **Maximum flexibility**: Protocols allow any implementation without coupling
+
+**File Organization**:
+```
+src/storage/
+├── base.py                 # BaseStorage ABC
+├── redis_store.py          # Inherits BaseStorage, satisfies StorageProtocol
+
+src/processor/
+├── base_detector.py        # BaseDetector ABC
+├── base_aggregator.py      # BaseAggregator ABC
+├── detector.py             # Inherits BaseDetector, satisfies DetectorProtocol
+└── aggregator.py           # Inherits BaseAggregator, satisfies AggregatorProtocol
+```
+
+**Summary**:
+
+The hybrid protocol+ABC approach gives us:
+- **Protocols**: Type flexibility, structural typing, third-party integration
+- **ABCs**: Code reuse, shared validation/logging, DRY implementation
+- **Both**: Contract enforcement + implementation efficiency
 
 ---
 

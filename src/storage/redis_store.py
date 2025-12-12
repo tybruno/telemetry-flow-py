@@ -7,10 +7,12 @@ Class:
 import logging
 from typing import Any
 
+from src.storage.base import BaseStorage
+
 _log = logging.getLogger(__name__)
 
 
-class RedisStore:
+class RedisStore(BaseStorage):
     """Redis implementation of StorageProtocol.
 
     Implements state storage using Redis key-value operations.
