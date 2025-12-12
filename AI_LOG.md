@@ -589,6 +589,93 @@ Created comprehensive architecture documentation and enhanced all entry point fi
 
 **Commit:** 6c2c831
 
+---
+
+## Interaction 16: Add __main__.py Entry Points and Console Scripts
+**Tool:** GitHub Copilot (Claude Sonnet 4.5)
+**Mode:** Chat
+**Instructions File:** `.github/copilot-instructions.md`
+**Purpose:** Add Python __main__.py files for cleaner module execution and configure console script entry points
+
+### Prompt
+```
+Let's use __main__.py where it's appropriate for our entry points. Make sure we update pyproject.toml if needed.
+```
+
+### AI Response
+Created `__main__.py` files for all three services to enable cleaner module execution (`python -m <package>` instead of `python -m <package>.main`) and added console script entry points to `pyproject.toml` for easy command-line access after installation.
+
+**Pattern Implemented:**
+Users now have **three ways** to run each service:
+1. **Module execution** (recommended): `python -m src.ingest` - Uses `__main__.py`
+2. **Console scripts**: `telemetry-ingest` - After `pip install -e .`
+3. **Direct module execution** (legacy): `python -m src.ingest.main` - Still works
+
+**Files Created:**
+
+1. **`src/ingest/__main__.py`**:
+   - Enables `python -m src.ingest` execution
+   - Imports and calls `main()` from `src.ingest.main`
+
+2. **`src/processor/__main__.py`**:
+   - Enables `python -m src.processor` execution
+   - Imports and calls `main()` from `src.processor.main`
+
+3. **`simulator/__main__.py`**:
+   - Enables `python -m simulator` execution
+   - Imports and calls `main()` from `simulator.main`
+
+**Files Modified:**
+
+4. **`pyproject.toml`**:
+   - Added `[project.scripts]` section with three console script entry points:
+     * `telemetry-ingest = "src.ingest.main:main"`
+     * `telemetry-processor = "src.processor.main:main"`
+     * `telemetry-simulator = "simulator.main:main"`
+
+5. **`ARCHITECTURE.md`**:
+   - Updated all entry point sections to show three methods:
+     * Module execution with `__main__.py`: `python -m <package>`
+     * Direct module execution: `python -m <package>.main`
+     * Console scripts: `telemetry-*`
+     * Docker Compose: `docker-compose up <service>`
+   - Updated development workflow examples to use `__main__.py` pattern
+
+6. **`src/ingest/main.py`**:
+   - Enhanced module docstring with all three entry point methods
+   - Added console script example: `telemetry-ingest`
+   - Marked `__main__.py` pattern as "recommended"
+   - Updated `main()` function examples
+
+7. **`src/processor/main.py`**:
+   - Enhanced module docstring with all three entry point methods
+   - Added console script example: `telemetry-processor`
+   - Marked `__main__.py` pattern as "recommended"
+   - Updated `main()` function examples
+
+8. **`simulator/main.py`**:
+   - Enhanced module docstring with all three entry point methods
+   - Added console script example: `telemetry-simulator`
+   - Marked `__main__.py` pattern as "recommended"
+   - Updated `main()` function examples
+
+**Benefits:**
+- **Cleaner commands**: `python -m src.ingest` vs `python -m src.ingest.main`
+- **Console scripts**: After installation, run `telemetry-ingest` from anywhere
+- **Standard Python pattern**: Using `__main__.py` follows Python packaging best practices
+- **Multiple entry methods**: Supports various deployment and development workflows
+- **Backward compatible**: Original `python -m <package>.main` still works
+
+**Entry Points Table:**
+
+| Component | Module | Console Script | Main Function |
+|-----------|--------|----------------|---------------|
+| **Ingest Service** | `python -m src.ingest` | `telemetry-ingest` | `src.ingest.main:main` |
+| **Processor Worker** | `python -m src.processor` | `telemetry-processor` | `src.processor.main:main` |
+| **Simulator** | `python -m simulator` | `telemetry-simulator` | `simulator.main:main` |
+
+**Commit:** (pending)
+
 
 
 

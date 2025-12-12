@@ -23,8 +23,14 @@ Functions:
 Example:
     Running the service::
 
-        # Via Python module
+        # Via Python module (recommended)
+        python -m src.ingest
+
+        # Direct module execution
         python -m src.ingest.main
+        
+        # Console script (after pip install -e .)
+        telemetry-ingest
 
         # Via Docker Compose
         docker-compose up ingest
@@ -108,11 +114,14 @@ def main() -> None:
     Example:
         Running the service::
 
-            # With defaults
-            python -m src.ingest.main
+            # With defaults (recommended)
+            python -m src.ingest
+            
+            # Or with console script
+            telemetry-ingest
             
             # With custom port
-            INGEST_API_PORT=9000 python -m src.ingest.main
+            INGEST_API_PORT=9000 python -m src.ingest
             
             # Service available at http://localhost:8000/telemetry
     """

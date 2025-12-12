@@ -26,8 +26,14 @@ Functions:
 Example:
     Running the simulator::
 
-        # Via Python module
+        # Via Python module (recommended)
+        python -m simulator
+        
+        # Direct module execution
         python -m simulator.main
+        
+        # Console script (after pip install -e .)
+        telemetry-simulator
         
         # Via Docker Compose
         docker-compose up simulator
@@ -90,14 +96,17 @@ def main() -> None:
     Example:
         Running with custom configuration::
         
-            # With defaults
-            python -m simulator.main
+            # With defaults (recommended)
+            python -m simulator
+            
+            # Or with console script
+            telemetry-simulator
             
             # With more devices
-            SIMULATOR_NUM_DEVICES=10 python -m simulator.main
+            SIMULATOR_NUM_DEVICES=10 python -m simulator
             
             # Custom ingest URL
-            INGEST_URL=http://ingest:8000 python -m simulator.main
+            INGEST_URL=http://ingest:8000 python -m simulator
     """
     raise NotImplementedError
 

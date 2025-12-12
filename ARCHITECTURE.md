@@ -73,12 +73,18 @@ The Distributed Network Telemetry Processing & Anomaly Detection system consists
 - `core.protocols.StreamProtocol`: To publish events
 - `streams.redis_stream.RedisStream`: Concrete Redis implementation
 
-**Entry Point**: 
+**Entry Points**: 
 ```bash
-# Run with uvicorn
+# As Python module (with __main__.py)
+python -m src.ingest
+
+# Direct module execution
 python -m src.ingest.main
 
-# Or via docker-compose
+# Console script (after pip install)
+telemetry-ingest
+
+# Via docker-compose
 docker-compose up ingest
 ```
 
@@ -120,12 +126,18 @@ docker-compose up ingest
 - `storage.redis_store.RedisStore`: Concrete storage implementation
 - `alerts.console.ConsoleAlerter`: Console alert implementation
 
-**Entry Point**:
+**Entry Points**:
 ```bash
-# Run worker
+# As Python module (with __main__.py)
+python -m src.processor
+
+# Direct module execution
 python -m src.processor.main
 
-# Or via docker-compose
+# Console script (after pip install)
+telemetry-processor
+
+# Via docker-compose
 docker-compose up processor
 ```
 
@@ -233,12 +245,18 @@ docker-compose up processor
 **Dependencies**:
 - `httpx` or `requests`: HTTP client
 
-**Entry Point**:
+**Entry Points**:
 ```bash
-# Run simulator
+# As Python module (with __main__.py)
+python -m simulator
+
+# Direct module execution
 python -m simulator.main
 
-# Or via docker-compose
+# Console script (after pip install)
+telemetry-simulator
+
+# Via docker-compose
 docker-compose up simulator
 ```
 
@@ -338,13 +356,13 @@ class AlerterProtocol(Protocol):
 docker-compose up redis
 
 # Terminal 2: Start Ingest Service
-python -m src.ingest.main
+python -m src.ingest  # or: telemetry-ingest
 
 # Terminal 3: Start Processor Worker
-python -m src.processor.main
+python -m src.processor  # or: telemetry-processor
 
 # Terminal 4: Run Simulator
-python -m simulator.main
+python -m simulator  # or: telemetry-simulator
 ```
 
 ### Production (Docker Compose)

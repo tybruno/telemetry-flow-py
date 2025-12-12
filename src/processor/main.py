@@ -25,8 +25,14 @@ Functions:
 Example:
     Running the worker::
 
-        # Via Python module
+        # Via Python module (recommended)
+        python -m src.processor
+        
+        # Direct module execution
         python -m src.processor.main
+        
+        # Console script (after pip install -e .)
+        telemetry-processor
         
         # Via Docker Compose
         docker-compose up processor
@@ -87,11 +93,14 @@ def main() -> None:
     Example:
         Running with custom configuration::
         
-            # With defaults
-            python -m src.processor.main
+            # With defaults (recommended)
+            python -m src.processor
+            
+            # Or with console script
+            telemetry-processor
             
             # With custom window size
-            PROCESSOR_WINDOW_SIZE_SECONDS=120 python -m src.processor.main
+            PROCESSOR_WINDOW_SIZE_SECONDS=120 python -m src.processor
             
             # Multiple workers (scale horizontally)
             docker-compose up --scale processor=3

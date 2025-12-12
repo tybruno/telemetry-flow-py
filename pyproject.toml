@@ -16,6 +16,11 @@ dependencies = [
     "structlog>=24.1.0",
 ]
 
+[project.scripts]
+telemetry-ingest = "src.ingest.main:main"
+telemetry-processor = "src.processor.main:main"
+telemetry-simulator = "simulator.main:main"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.0",
