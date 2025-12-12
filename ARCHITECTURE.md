@@ -99,18 +99,14 @@ docker-compose up ingest
 
 ### 3. Processor Workers (`src/processor/`)
 
-**Purpose**: Consume events from streams, aggregate metrics, detect anomalies, send alerts
+**Purpose**: Orchestrate event processing using consumer, aggregation, and detection libraries
 
 **What It Contains**:
 - `main.py`: Worker entry point
-- `worker.py`: Main processing orchestrator
-- `consumer.py`: Robust stream consumer with error handling
-- `aggregator.py`: Time-windowed metric aggregation
-- `detector.py`: Anomaly detection logic
-- `deserializer.py`: Parse raw stream messages
-- `error_handler.py`: Retry logic with exponential backoff
-- `state.py`: State management for windows
-- `models.py`: Processing-specific models (`WindowState`, `AnomalyResult`)
+- `worker.py`: Processing orchestrator (uses libraries)
+- `config.py`: Processor-specific configuration
+- `models.py`: Processor-specific models
+- `exceptions.py`: Processor-specific exceptions
 
 **Communication**:
 - **Input**: Consumes from Redis Streams (`telemetry` stream, `telemetry-processors` consumer group)
@@ -119,7 +115,9 @@ docker-compose up ingest
   - Sends alerts via `AlerterProtocol`
 
 **Dependencies**:
-- `core.protocols.StreamProtocol`: To consume events
+- `consumers.consumer.TelemetryConsumer`: Generic stream consumer
+- `aggregation.tumbling_window.TumblingWindowAggregator`: Windowed aggregation
+- `detection.threshold.ThresholdDetector`: Anomaly detection
 - `core.protocols.StorageProtocol`: To persist state
 - `core.protocols.AlerterProtocol`: To send alerts
 - `streams.redis_stream.RedisStream`: Concrete stream implementation
@@ -142,17 +140,102 @@ docker-compose up processor
 ```
 
 **Flow**:
-1. Consume events from Redis Streams (XREADGROUP)
-2. Deserialize raw message to `TelemetryEvent`
-3. Aggregate events in time windows (e.g., 60-second windows)
-4. Detect anomalies using threshold detection
+1. Consumer library: Consume events from Redis Streams (XREADGROUP)
+2. Consumer library: Deserialize raw message to `TelemetryEvent`
+3. Aggregation library: Aggregate events in time windows (e.g., 60-second windows)
+4. Detection library: Detect anomalies using threshold detection
 5. Store aggregated metrics to Redis
 6. Send alerts for detected anomalies
-7. Acknowledge message (XACK)
+7. Consumer library: Acknowledge message (XACK)
 
 ---
 
-### 4. Streams Infrastructure (`src/streams/`)
+### 4. Consumer Infrastructure (`src/consumers/`)
+
+**Purpose**: Reusable stream consumer library with robust error handling and message processing
+
+**What It Contains**:
+- `consumer.py`: Generic stream consumer with composition pattern
+- `deserializer.py`: Message parsing and validation
+- `error_handler.py`: Exponential backoff retry logic
+- `models.py`: Consumer-specific models
+- `exceptions.py`: Consumer-specific exceptions
+
+**Communication**:
+- Wraps `StreamProtocol` for stream operations
+- Used by Processor service and can be used by any service needing stream consumption
+
+**Dependencies**:
+- `core.protocols.StreamProtocol`: Stream operations interface
+- `streams.backpressure.BackpressureManager`: Rate limiting
+
+**Entry Point**: None (library only)
+
+**Key Features**:
+- Complete pipeline: consume → deserialize → validate → acknowledge
+- Exponential backoff retry for transient failures
+- Backpressure management for overload protection
+- Error classification (transient vs permanent)
+- Generic design works with any domain model
+
+---
+
+### 5. Aggregation Infrastructure (`src/aggregation/`)
+
+**Purpose**: Reusable time-windowed aggregation library for metric processing
+
+**What It Contains**:
+- `base_aggregator.py`: Abstract base with shared window utilities
+- `tumbling_window.py`: Tumbling window aggregator implementation
+- `state.py`: Window state management
+- `models.py`: Aggregation-specific models (`WindowState`, `AggregatedMetric`)
+- `exceptions.py`: Aggregation-specific exceptions
+
+**Communication**:
+- Used by Processor service and can be used by any service needing aggregation
+- Stateless design - state managed externally via `StorageProtocol`
+
+**Dependencies**:
+- `core.models.TelemetryEvent`: Input event type (can be generalized)
+
+**Entry Point**: None (library only)
+
+**Key Features**:
+- Configurable window sizes (default: 60 seconds)
+- Statistical calculations: avg, min, max, stddev, count
+- Window state tracking with timestamp boundaries
+- Generic design works with any metric stream
+
+---
+
+### 6. Detection Infrastructure (`src/detection/`)
+
+**Purpose**: Reusable anomaly detection library with multiple strategies
+
+**What It Contains**:
+- `base_detector.py`: Abstract base with shared detection utilities
+- `threshold.py`: Threshold-based detector implementation
+- `models.py`: Detection-specific models (`AnomalyResult`)
+- `exceptions.py`: Detection-specific exceptions
+
+**Communication**:
+- Used by Processor service and can be used by any service needing anomaly detection
+- Stateless design - operates on aggregated metrics
+
+**Dependencies**:
+- `aggregation.models.AggregatedMetric`: Input metric type
+
+**Entry Point**: None (library only)
+
+**Key Features**:
+- Threshold-based detection (configurable per metric)
+- Extensible for ML-based detection, statistical methods, etc.
+- Severity classification (low, medium, high, critical)
+- Generic design works with any metric type
+
+---
+
+### 7. Streams Infrastructure (`src/streams/`)
 
 **Purpose**: Reusable message streaming infrastructure (implements `StreamProtocol`)
 
@@ -180,7 +263,7 @@ docker-compose up processor
 
 ---
 
-### 5. Storage Infrastructure (`src/storage/`)
+### 8. Storage Infrastructure (`src/storage/`)
 
 **Purpose**: Reusable state persistence infrastructure (implements `StorageProtocol`)
 
@@ -207,7 +290,7 @@ docker-compose up processor
 
 ---
 
-### 6. Alerts Infrastructure (`src/alerts/`)
+### 9. Alerts Infrastructure (`src/alerts/`)
 
 **Purpose**: Reusable alert delivery infrastructure (implements `AlerterProtocol`)
 
@@ -231,7 +314,7 @@ docker-compose up processor
 
 ---
 
-### 7. Simulator (`simulator/`)
+### 10. Simulator (`simulator/`)
 
 **Purpose**: Simulate network devices sending telemetry data
 
@@ -292,15 +375,15 @@ docker-compose up simulator
    └─> Store message in stream
        Messages available to consumer group
 
-4. Processor Worker
-   ├─> Consume message (XREADGROUP telemetry telemetry-processors worker-1)
-   ├─> Deserialize to TelemetryEvent
-   ├─> Aggregate in time window (e.g., 60s window)
+4. Processor Worker (orchestrates libraries)
+   ├─> [Consumer Library] Consume message (XREADGROUP telemetry telemetry-processors worker-1)
+   ├─> [Consumer Library] Deserialize to TelemetryEvent
+   ├─> [Aggregation Library] Aggregate in time window (e.g., 60s window)
    │   └─> Calculate: avg, min, max, stddev, count
-   ├─> Detect anomalies (threshold-based)
+   ├─> [Detection Library] Detect anomalies (threshold-based)
    ├─> Store aggregated metrics (Redis SET)
    ├─> Send alerts if anomaly detected
-   └─> Acknowledge message (XACK)
+   └─> [Consumer Library] Acknowledge message (XACK)
 
 5. Redis Storage
    └─> Persist aggregated metrics and window state
