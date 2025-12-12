@@ -104,6 +104,8 @@ class StreamProtocol(Protocol):
     """Contract for stream operations."""
     async def publish(self, stream: str, data: dict) -> str: ...
     async def consume(self, stream: str, group: str) -> AsyncIterator[Event]: ...
+    async def acknowledge(self, stream: str, group: str, message_id: str) -> None: ...
+    async def create_consumer_group(self, stream: str, group: str, start_id: str) -> None: ...
 
 # core/exceptions.py - Base exception hierarchy
 class TelemetryError(Exception):
@@ -141,8 +143,9 @@ class IngestRequest:   # Only used by ingest service
 class IngestResponse:  # Only used by ingest service
 
 # src/processor/models.py
-class WindowState:     # Only used by processor
-class AnomalyResult:   # Only used by processor
+class WindowState:     # Window aggregation state (device/interface/metric)
+class AggregatedMetric:  # Completed window with statistics
+class AnomalyResult:   # Anomaly detection result
 
 # src/streams/models.py
 class StreamMessage:   # Only used by stream infrastructure
@@ -184,7 +187,9 @@ TelemetryError
 TelemetryError
 └── ProcessorError
     ├── AggregationError
-    └── StateRecoveryError
+    ├── StateRecoveryError
+    ├── DeserializationError
+    └── MaxRetriesExceededError
 
 # streams/exceptions.py
 TelemetryError
@@ -242,7 +247,69 @@ service = IngestService(stream=stream)
 - Can swap implementations without changing service code
 - Infrastructure logic is isolated and reusable
 
-#### 6. Test Structure Mirrors Source Structure
+#### 7. Robust Consumer Design with Composition
+
+**Decision**: TelemetryConsumer orchestrates message processing using composition of specialized components.
+
+**Justification**:
+- **Real Responsibilities**: Consumer handles deserialization, validation, error handling, retries, and backpressure
+- **Composition Pattern**: Each concern delegated to specialized component
+- **Production-Ready**: Handles malformed data, transient failures, and overload scenarios
+- **Testability**: Each component can be mocked independently
+
+**Structure**:
+```python
+# processor/consumer.py
+class TelemetryConsumer:
+    """Robust consumer with complete message processing pipeline."""
+    
+    def __init__(
+        self,
+        *,
+        stream: StreamProtocol,              # Stream operations
+        deserializer: MessageDeserializer,   # Raw data → TelemetryEvent
+        error_handler: ConsumerErrorHandler, # Retry logic & classification
+        backpressure: BackpressureManager,   # Rate limiting
+        stream_name: str,
+        group_name: str,
+        consumer_name: str,
+    ) -> None:
+        """Initialize with all pipeline components."""
+
+# processor/deserializer.py
+class MessageDeserializer:
+    """Parses and validates raw stream messages."""
+    
+    def deserialize(self, data: dict) -> TelemetryEvent:
+        """Parse raw data into typed TelemetryEvent."""
+
+# processor/error_handler.py
+class ConsumerErrorHandler:
+    """Retry logic with exponential backoff."""
+    
+    async def with_retry(
+        self, 
+        operation: Callable, 
+        message_id: str, 
+        data: Any
+    ) -> T:
+        """Execute operation with automatic retries."""
+```
+
+**Processing Pipeline**:
+1. **Consume**: Read messages from stream via StreamProtocol
+2. **Deserialize**: Parse raw data into TelemetryEvent (with validation)
+3. **Error Handling**: Retry transient failures with exponential backoff
+4. **Backpressure**: Apply rate limiting if system overloaded
+5. **Acknowledge**: Mark message as processed for at-least-once delivery
+
+**Benefits**:
+- Each component has single responsibility
+- Easy to test each stage independently
+- Production-grade error handling
+- Can swap any component (e.g., different deserializer for different formats)
+
+#### 8. Test Structure Mirrors Source Structure
 
 **Decision**: Tests are organized in a one-to-one mapping with source packages, with package-specific fixtures.
 
@@ -289,7 +356,7 @@ def mock_aggregator():
 - Package extraction includes all necessary test infrastructure
 - Easy to run tests for a specific package: `pytest tests/processor/`
 
-#### 7. Type Safety with py.typed
+#### 9. Type Safety with py.typed
 
 **Decision**: Every distributable package includes a `py.typed` marker file.
 
@@ -351,7 +418,7 @@ from telemetry_streams.models import StreamMessage
 from typing import Protocol, AsyncIterator
 
 class StreamProtocol(Protocol):
-    """Contract for stream operations."""
+    """Contract for stream operations with at-least-once delivery."""
     
     async def publish(self, stream: str, data: dict) -> str:
         """Publish data to stream."""
@@ -364,10 +431,28 @@ class StreamProtocol(Protocol):
     ) -> AsyncIterator[dict]:
         """Consume messages from stream."""
         ...
+    
+    async def acknowledge(
+        self,
+        stream: str,
+        group: str,
+        message_id: str,
+    ) -> None:
+        """Acknowledge successful message processing."""
+        ...
+    
+    async def create_consumer_group(
+        self,
+        stream: str,
+        group: str,
+        start_id: str = "$",
+    ) -> None:
+        """Create consumer group for distributed processing."""
+        ...
 
 # streams/redis_stream.py - Implements protocol implicitly
 class RedisStream:
-    """Redis Streams implementation (no explicit inheritance)."""
+    """Redis Streams implementation with at-least-once delivery."""
     
     async def publish(self, stream: str, data: dict) -> str:
         # Implementation
@@ -378,8 +463,26 @@ class RedisStream:
         stream: str, 
         group: str
     ) -> AsyncIterator[dict]:
-        # Implementation
+        # Implementation using XREADGROUP
         yield message
+    
+    async def acknowledge(
+        self,
+        stream: str,
+        group: str,
+        message_id: str,
+    ) -> None:
+        # Implementation using XACK
+        await self._client.xack(stream, group, message_id)
+    
+    async def create_consumer_group(
+        self,
+        stream: str,
+        group: str,
+        start_id: str = "$",
+    ) -> None:
+        # Implementation using XGROUP CREATE
+        await self._client.xgroup_create(stream, group, start_id)
 
 # Type checker validates: RedisStream satisfies StreamProtocol ✅
 ```
@@ -412,17 +515,17 @@ class TelemetryWorker:
     
     def __init__(
         self,
-        consumer: StreamProtocol,        # Protocol dependency
-        aggregator: AggregatorProtocol,  # Protocol dependency
-        detector: DetectorProtocol,      # Protocol dependency
-        state: StorageProtocol,          # Protocol dependency
-        alerter: AlerterProtocol,        # Protocol dependency
+        consumer: TelemetryConsumer,              # Robust consumer with error handling
+        aggregator: TumblingWindowAggregator,     # Time-windowed aggregation
+        detector: ThresholdDetector,              # Per-metric threshold detection
+        storage: StorageProtocol,                 # State persistence
+        alerter: AlerterProtocol,                 # Alert delivery
     ) -> None:
-        """Initialize worker with all dependencies."""
+        """Initialize worker with all pipeline components."""
         self._consumer = consumer
         self._aggregator = aggregator
         self._detector = detector
-        self._state = state
+        self._storage = storage
         self._alerter = alerter
     
     async def process_events(self) -> None:
@@ -628,6 +731,25 @@ class IngestConfig(BaseConfig):
     
     class Config:
         env_prefix = "INGEST_"  # INGEST_API_PORT=8080
+
+# processor/config.py - Processor-specific configuration
+from src.core.config import BaseConfig
+
+class ProcessorConfig(BaseConfig):
+    """Configuration for processor service."""
+    
+    window_size_seconds: int = 60
+    consumer_group: str = "telemetry-processors"
+    max_retries: int = 3
+    default_threshold: float = 80.0
+    metric_thresholds: dict[str, float] = {}  # Per-metric overrides
+    
+    def get_threshold(self, metric_name: str) -> float:
+        """Get metric-specific or default threshold."""
+        return self.metric_thresholds.get(metric_name, self.default_threshold)
+    
+    class Config:
+        env_prefix = "PROCESSOR_"
 ```
 
 **Configuration Sources (Priority)**:
@@ -735,6 +857,7 @@ class AlertSeverity(Enum):
 **Pattern**:
 ```python
 import logging as _log
+
 
 # Structured logging with context
 _log.info(
@@ -860,213 +983,6 @@ _log.error(
 - Only necessary abstractions
 - Clear naming conventions
 - Self-documenting structure
-
----
-
-## Architecture Evolution (Design Review Outcomes)
-
-### Overview
-
-After comprehensive design review against assignment requirements, several critical enhancements were made to ensure robust distributed processing, proper error handling, and production-grade reliability.
-
-### 1. Stream Protocol Enhancements
-
-**Issue**: Missing message acknowledgment and consumer group initialization methods.
-
-**Solution**: Extended `StreamProtocol` with two critical methods:
-
-```python
-async def acknowledge(
-    self,
-    stream: str,
-    group: str,
-    message_id: str,
-) -> None:
-    """Acknowledge successful message processing."""
-    ...
-
-async def create_consumer_group(
-    self,
-    stream: str,
-    group: str,
-    start_id: str = "$",
-) -> None:
-    """Create consumer group for distributed processing."""
-    ...
-```
-
-**Justification**:
-- **At-Least-Once Delivery**: Messages remain in pending list until explicitly acknowledged, preventing data loss on worker crashes
-- **Consumer Group Management**: Required before workers can join and consume from Redis Streams
-- **Production Reliability**: Proper acknowledgment enables retry of failed messages and prevents duplicate processing
-
-### 2. Enhanced TelemetryConsumer Architecture
-
-**Issue**: Original consumer was a thin wrapper around StreamProtocol with no real responsibilities.
-
-**Solution**: Redesigned consumer as robust orchestrator using composition pattern:
-
-```python
-class TelemetryConsumer:
-    """Handles complete consumption pipeline."""
-    
-    _stream: StreamProtocol              # Stream operations
-    _deserializer: MessageDeserializer   # Raw data → TelemetryEvent
-    _error_handler: ConsumerErrorHandler # Retry logic & error classification
-    _backpressure: BackpressureManager   # Rate limiting
-```
-
-**New Supporting Components**:
-
-- **MessageDeserializer** (`src/processor/deserializer.py`): Parses raw stream data into typed `TelemetryEvent` objects with validation
-- **ConsumerErrorHandler** (`src/processor/error_handler.py`): Implements exponential backoff retries, error classification, and dead letter handling
-
-**Justification**:
-- **Single Responsibility**: Each component handles one aspect (deserialization, error handling, backpressure)
-- **Composition Over Inheritance**: Components are injected dependencies, not inherited behavior
-- **Testability**: Each component can be mocked and tested independently
-- **Production-Ready**: Handles real-world concerns (malformed data, transient failures, overload)
-
-### 3. TelemetryWorker Dependency Injection
-
-**Issue**: Worker was missing `TumblingWindowAggregator` and `ThresholdDetector` dependencies.
-
-**Solution**: Added missing dependencies to constructor:
-
-```python
-class TelemetryWorker:
-    def __init__(
-        self,
-        *,
-        consumer: TelemetryConsumer,
-        aggregator: TumblingWindowAggregator,  # NEW
-        detector: ThresholdDetector,           # NEW
-        storage: StorageProtocol,
-        alerter: AlerterProtocol,
-    ) -> None:
-        """Initialize with all pipeline components."""
-```
-
-**Justification**:
-- **Complete Pipeline**: Worker now has all components needed for end-to-end processing
-- **Dependency Injection**: Enables testing with mock aggregator/detector
-- **Clear Responsibilities**: Worker orchestrates, delegates actual work to specialists
-
-### 4. Per-Metric Threshold Detection
-
-**Issue**: Single threshold value insufficient for different metric types (bandwidth vs. errors vs. packet loss).
-
-**Solution**: Enhanced `ThresholdDetector` to accept metric-specific thresholds:
-
-```python
-class ThresholdDetector:
-    def __init__(
-        self,
-        *,
-        thresholds: dict[str, float],  # Per-metric thresholds
-        default_threshold: float = 80.0,
-    ) -> None:
-        """Initialize with metric-specific thresholds.
-        
-        Example:
-            detector = ThresholdDetector(
-                thresholds={
-                    "bandwidth_utilization": 90.0,
-                    "error_rate": 1.0,
-                    "packet_loss": 0.5,
-                }
-            )
-        """
-```
-
-**Justification**:
-- **Metric-Specific Sensitivity**: Bandwidth may be critical at 90%, but 1% error rate is already concerning
-- **Flexible Configuration**: Per-metric thresholds loaded from config file
-- **Backward Compatible**: Falls back to default threshold for unconfigured metrics
-
-### 5. ProcessorConfig Class
-
-**Issue**: Configuration values in `config/processor.yaml` had no corresponding Python class to load them.
-
-**Solution**: Created `ProcessorConfig` using Pydantic Settings:
-
-```python
-class ProcessorConfig(BaseSettings):
-    """Type-safe processor configuration."""
-    
-    window_size_seconds: int = 60
-    consumer_group: str = "telemetry-processors"
-    max_retries: int = 3
-    default_threshold: float = 80.0
-    metric_thresholds: dict[str, float] = {}
-    stream_name: str = "telemetry"
-    redis_url: str = "redis://localhost:6379"
-    
-    def get_threshold(self, metric_name: str) -> float:
-        """Get metric-specific or default threshold."""
-        return self.metric_thresholds.get(
-            metric_name, 
-            self.default_threshold
-        )
-```
-
-**Justification**:
-- **Type Safety**: Pydantic validates configuration at startup
-- **Environment Overrides**: Can override YAML values via `PROCESSOR_*` environment variables
-- **Self-Documenting**: Configuration schema is the Python class itself
-- **Centralized**: Single source of truth for all processor settings
-
-### 6. Aggregator State Tracking
-
-**Issue**: Aggregator had no attributes to track per-device/interface/metric window state.
-
-**Solution**: Added `_windows` dictionary for state tracking:
-
-```python
-class TumblingWindowAggregator:
-    __slots__ = ("_window_size", "_window_delta", "_windows")
-    
-    _windows: dict[tuple[str, str, str], WindowState]
-    # Key: (device_id, interface, metric_name)
-    # Value: WindowState for current window
-```
-
-**Justification**:
-- **Per-Device Aggregation**: Each device/interface/metric gets independent window
-- **Tumbling Window Semantics**: Tracks window boundaries and accumulates events
-- **Memory Efficiency**: Uses `__slots__` to minimize overhead
-
-### 7. Additional Exception Types
-
-**Issue**: New components needed specific exception types for error handling.
-
-**Solution**: Added to `src/processor/exceptions.py`:
-
-```python
-class DeserializationError(ProcessorError):
-    """Message deserialization failure."""
-
-class MaxRetriesExceededError(ProcessorError):
-    """Retry limit exceeded."""
-```
-
-**Justification**:
-- **Specific Error Handling**: Can catch and handle deserialization vs. retry failures differently
-- **Diagnostic Context**: Exception type immediately indicates failure category
-- **Hierarchical**: Both inherit from `ProcessorError` for catch-all handling
-
-### Impact Summary
-
-These enhancements address critical gaps identified during design review:
-
-1. **Reliability**: Acknowledgment protocol ensures no message loss
-2. **Error Handling**: Comprehensive retry logic and deserialization validation
-3. **Flexibility**: Per-metric thresholds enable nuanced anomaly detection
-4. **Completeness**: All components have necessary dependencies
-5. **Configuration**: Type-safe config loading with validation
-6. **Production-Ready**: Real-world concerns (backpressure, retries, state tracking) addressed
-
-The architecture now supports robust distributed processing with proper error handling, rate limiting, and anomaly detection suitable for production deployment.
 
 ---
 
