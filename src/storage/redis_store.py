@@ -24,9 +24,14 @@ Example:
         await store.delete("window:device-01")
 """
 
+import json
+import logging as _log
 from typing import Any
 
+import redis.asyncio as redis
+
 from src.storage.base import BaseStorage
+from src.storage.exceptions import StorageError
 
 
 class RedisStore(BaseStorage):
@@ -60,7 +65,7 @@ class RedisStore(BaseStorage):
     __slots__ = ("_client", "_url")
 
     _url: str
-    _client: Any  # redis.asyncio.Redis
+    _client: redis.Redis  # type: ignore[type-arg]
 
     def __init__(self, *, url: str) -> None:
         """Initialize Redis store.
@@ -72,7 +77,15 @@ class RedisStore(BaseStorage):
             ValueError: If URL is invalid or empty.
             ConnectionError: If Redis connection cannot be established.
         """
-        raise NotImplementedError
+        if not url or not url.strip():
+            error_message = "Redis URL cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        super().__init__(connection=None)
+        self._url = url
+        self._client = redis.from_url(url, decode_responses=True)
+        _log.info("Redis store initialized: url=%s", url)
 
     async def set(
         self,
@@ -91,7 +104,26 @@ class RedisStore(BaseStorage):
             ValueError: If key is empty or value cannot be serialized.
             StorageError: If Redis operation fails.
         """
-        raise NotImplementedError
+        self._validate_key(key)
+        self._log_operation("set", key)
+
+        try:
+            serialized_value = json.dumps(value)
+        except (TypeError, ValueError) as e:
+            error_message = "Failed to serialize value: %s"
+            _log.error(error_message, str(e))
+            raise ValueError(error_message % str(e)) from e
+
+        try:
+            if ttl is not None:
+                await self._client.setex(key, ttl, serialized_value)
+            else:
+                await self._client.set(key, serialized_value)
+            _log.debug("Stored key: %s", key)
+        except Exception as e:
+            error_message = "Redis SET failed: %s"
+            _log.error(error_message, str(e))
+            raise StorageError(error_message % str(e)) from e
 
     async def retrieve(self, key: str) -> dict[str, object] | None:
         """Retrieve value from Redis.
@@ -107,7 +139,24 @@ class RedisStore(BaseStorage):
             StorageError: If Redis operation fails or value cannot be
                 deserialized.
         """
-        raise NotImplementedError
+        self._validate_key(key)
+        self._log_operation("retrieve", key)
+
+        try:
+            value = await self._client.get(key)
+            if value is None:
+                return None
+
+            deserialized_value: dict[str, object] = json.loads(value)
+            return deserialized_value
+        except json.JSONDecodeError as e:
+            error_message = "Failed to deserialize value: %s"
+            _log.error(error_message, str(e))
+            raise StorageError(error_message % str(e)) from e
+        except Exception as e:
+            error_message = "Redis GET failed: %s"
+            _log.error(error_message, str(e))
+            raise StorageError(error_message % str(e)) from e
 
     async def delete(self, key: str) -> bool:
         """Delete value from Redis.
@@ -122,7 +171,30 @@ class RedisStore(BaseStorage):
             ValueError: If key is empty.
             StorageError: If Redis operation fails.
         """
-        raise NotImplementedError
+        self._validate_key(key)
+        self._log_operation("delete", key)
+
+        try:
+            result = await self._client.delete(key)
+            was_deleted = result > 0
+            return was_deleted
+        except Exception as e:
+            error_message = "Redis DELETE failed: %s"
+            _log.error(error_message, str(e))
+            raise StorageError(error_message % str(e)) from e
+
+    async def store(self, key: str, value: Any) -> None:
+        """Store a value with the given key (StorageProtocol compatibility).
+
+        Args:
+            key: Storage key identifier.
+            value: Value to store (will be serialized).
+
+        Raises:
+            ValueError: If key is invalid.
+            StorageError: If storage operation fails.
+        """
+        await self.set(key=key, value=value)
 
     async def close(self) -> None:
         """Close Redis connection.
@@ -133,7 +205,13 @@ class RedisStore(BaseStorage):
         Raises:
             StorageError: If connection close fails.
         """
-        raise NotImplementedError
+        try:
+            await self._client.close()
+            _log.info("Redis connection closed")
+        except Exception as e:
+            error_message = "Failed to close Redis connection: %s"
+            _log.error(error_message, str(e))
+            raise StorageError(error_message % str(e)) from e
 
 
 __all__ = ["RedisStore"]

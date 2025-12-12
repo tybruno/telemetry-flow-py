@@ -41,6 +41,9 @@ Example:
         # Sends telemetry every 1-5 seconds per device
 """
 
+import sys
+
+
 async def run_simulator() -> None:
     """Run device simulator.
 
@@ -114,8 +117,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    import sys
-
     sys.exit(main())
 
 

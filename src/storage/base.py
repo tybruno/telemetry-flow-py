@@ -8,6 +8,7 @@ Classes:
     BaseStorage: Abstract base class for storage implementations.
 """
 
+import logging as _log
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -48,7 +49,7 @@ class BaseStorage(ABC):
         Raises:
             ValueError: If connection is invalid or cannot be established.
         """
-        raise NotImplementedError
+        self._connection = connection
 
     @abstractmethod
     async def store(self, key: str, value: Any) -> None:
@@ -101,7 +102,13 @@ class BaseStorage(ABC):
         Example:
             self._validate_key(key)  # Before storing
         """
-        raise NotImplementedError
+        if not key or not key.strip():
+            error_message = "Storage key cannot be empty"
+            raise ValueError(error_message) from None
+
+        if len(key) > 1024:
+            error_message = "Storage key too long (max 1024 characters): %d"
+            raise ValueError(error_message % len(key)) from None
 
     def _log_operation(self, operation: str, key: str) -> None:
         """Log storage operation for debugging and monitoring.
@@ -116,7 +123,7 @@ class BaseStorage(ABC):
         Example:
             self._log_operation("store", key)
         """
-        raise NotImplementedError
+        _log.debug("Storage operation: operation=%s, key=%s", operation, key)
 
 
 __all__ = ["BaseStorage"]

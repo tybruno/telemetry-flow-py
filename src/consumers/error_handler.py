@@ -7,8 +7,22 @@ Classes:
     ConsumerErrorHandler: Handles errors and retries for message processing.
 """
 
+import asyncio
+import logging as _log
+import random
+from asyncio import TimeoutError as AsyncioTimeoutError
 from collections.abc import Awaitable, Callable
 from typing import Any, TypeVar
+
+from redis.exceptions import BusyLoadingError
+from redis.exceptions import ConnectionError as RedisConnectionError
+from redis.exceptions import TimeoutError as RedisTimeoutError
+
+from src.consumers.exceptions import (
+    ConsumerError,
+    DeserializationError,
+    RetryExhaustedError,
+)
 
 T = TypeVar("T")
 
@@ -67,7 +81,42 @@ class ConsumerErrorHandler:
         Raises:
             ValueError: If any parameter is negative.
         """
-        raise NotImplementedError
+        self._validate_retry_params(max_retries, base_delay, max_delay)
+
+        self._max_retries = max_retries
+        self._base_delay = base_delay
+        self._max_delay = max_delay
+
+    def _validate_retry_params(
+        self,
+        max_retries: int,
+        base_delay: float,
+        max_delay: float
+    ) -> None:
+        """Validate retry configuration parameters.
+
+        Args:
+            max_retries: Maximum retry attempts.
+            base_delay: Base delay in seconds.
+            max_delay: Maximum delay in seconds.
+
+        Raises:
+            ValueError: If any parameter is negative.
+        """
+        if max_retries < 0:
+            error_message = "max_retries must be non-negative: %d"
+            _log.error(error_message, max_retries)
+            raise ValueError(error_message % max_retries) from None
+
+        if base_delay < 0:
+            error_message = "base_delay must be non-negative: %f"
+            _log.error(error_message, base_delay)
+            raise ValueError(error_message % base_delay) from None
+
+        if max_delay < 0:
+            error_message = "max_delay must be non-negative: %f"
+            _log.error(error_message, max_delay)
+            raise ValueError(error_message % max_delay) from None
 
     async def with_retry(
         self,
@@ -100,7 +149,115 @@ class ConsumerErrorHandler:
                 data={"device_id": "router-01", ...}
             )
         """
-        raise NotImplementedError
+        last_exception = None
+
+        for attempt in range(self._max_retries + 1):
+            try:
+                result = await operation(data)
+
+                if attempt > 0:
+                    self._log_retry_success(attempt, message_id)
+
+                return result
+
+            except Exception as e:
+                last_exception = e
+
+                self._handle_retry_error(e, attempt, message_id)
+
+                if attempt < self._max_retries:
+                    delay = self.calculate_delay(attempt)
+                    await asyncio.sleep(delay)
+
+        if last_exception:
+            raise RetryExhaustedError(
+                "All retry attempts exhausted"
+            ) from last_exception
+
+        error_message = "Operation failed without exception"
+        raise RuntimeError(error_message) from None
+
+    def _log_retry_success(self, attempt: int, message_id: str) -> None:
+        """Log successful retry operation.
+
+        Args:
+            attempt: Number of attempts made.
+            message_id: Message identifier.
+        """
+        _log.info(
+            "Operation succeeded after %d retries for message_id=%s",
+            attempt,
+            message_id
+        )
+
+    def _handle_retry_error(
+        self,
+        error: Exception,
+        attempt: int,
+        message_id: str
+    ) -> None:
+        """Handle error during retry attempt.
+
+        Args:
+            error: Exception that occurred.
+            attempt: Current attempt number.
+            message_id: Message identifier.
+
+        Raises:
+            ConsumerError: If error is not retryable.
+        """
+        if not self.is_retryable(error):
+            _log.error(
+                "Non-retryable error for message_id=%s: %s",
+                message_id,
+                str(error)
+            )
+            raise ConsumerError("Non-retryable error occurred") from error
+
+        if attempt < self._max_retries:
+            self._log_retry_attempt(attempt, message_id, error)
+        else:
+            self._log_retry_exhausted(message_id, error)
+
+    def _log_retry_attempt(
+        self,
+        attempt: int,
+        message_id: str,
+        error: Exception
+    ) -> None:
+        """Log retry attempt details.
+
+        Args:
+            attempt: Current attempt number.
+            message_id: Message identifier.
+            error: Exception that occurred.
+        """
+        delay = self.calculate_delay(attempt)
+        _log.warning(
+            "Retry attempt %d/%d for message_id=%s after %0.2fs: %s",
+            attempt + 1,
+            self._max_retries,
+            message_id,
+            delay,
+            str(error)
+        )
+
+    def _log_retry_exhausted(
+        self,
+        message_id: str,
+        error: Exception
+    ) -> None:
+        """Log retry exhaustion.
+
+        Args:
+            message_id: Message identifier.
+            error: Exception that occurred.
+        """
+        _log.error(
+            "All retry attempts exhausted for message_id=%s: %s",
+            message_id,
+            str(error)
+        )
 
     def is_retryable(self, error: Exception) -> bool:
         """Determine if error is retryable.
@@ -120,7 +277,34 @@ class ConsumerErrorHandler:
                 else:
                     # Send to dead letter queue
         """
-        raise NotImplementedError
+        # Network and transient errors are retryable
+        retryable_types = (
+            ConnectionError,
+            TimeoutError,
+            AsyncioTimeoutError,
+            RedisConnectionError,
+            RedisTimeoutError,
+            BusyLoadingError,
+        )
+
+        # DeserializationError is NOT retryable (permanent data issue)
+        non_retryable_types = (
+            DeserializationError,
+            ValueError,
+            TypeError,
+        )
+
+        if isinstance(error, non_retryable_types):
+            is_retryable_error = False
+            return is_retryable_error
+
+        if isinstance(error, retryable_types):
+            is_retryable_error = True
+            return is_retryable_error
+
+        # Unknown errors default to retryable (conservative approach)
+        is_retryable_error = True
+        return is_retryable_error
 
     def calculate_delay(self, attempt: int) -> float:
         """Calculate exponential backoff delay.
@@ -135,7 +319,22 @@ class ConsumerErrorHandler:
             delay = handler.calculate_delay(attempt=2)
             await asyncio.sleep(delay)
         """
-        raise NotImplementedError
+        # Exponential backoff: base_delay * 2^attempt
+        exponential_delay = self._base_delay * (2 ** attempt)
+
+        # Cap at max_delay
+        capped_delay = min(exponential_delay, self._max_delay)
+
+        # Add jitter (± 10%) to prevent thundering herd
+        jitter_range = capped_delay * 0.1
+        jitter = random.uniform(-jitter_range, jitter_range)
+
+        final_delay = capped_delay + jitter
+
+        # Ensure non-negative
+        delay_with_floor: float = max(0.0, final_delay)
+
+        return delay_with_floor
 
 
 __all__ = ["ConsumerErrorHandler"]

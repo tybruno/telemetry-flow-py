@@ -19,10 +19,13 @@ Example:
 """
 
 import logging as _log
+import math
+from contextlib import suppress
 from datetime import datetime, timezone
 
 from src.core.models import TelemetryEvent
 from src.core.protocols import StreamProtocol
+from src.ingest.exceptions import InvalidPayloadError, StreamPublishError
 from src.ingest.models import IngestRequest, IngestResponse
 
 
@@ -108,7 +111,29 @@ class IngestService:
                 )
                 print(response.event_id)
         """
-        raise NotImplementedError
+
+        _log.debug(
+            "Ingesting telemetry: device=%s, interface=%s, metric=%s",
+            request.device_id,
+            request.interface,
+            request.metric_name
+        )
+
+        # Validate request
+        self._validate_request(request)
+
+        # Transform to domain event
+        event = self._transform_to_event(request)
+
+        # Publish to stream
+        event_id = await self._publish_event(event)
+
+        response = IngestResponse(
+            event_id=event_id,
+            status="accepted",
+            device_id=request.device_id
+        )
+        return response
 
     async def check_health(self) -> bool:
         """Check health of service and dependencies.
@@ -126,7 +151,15 @@ class IngestService:
                 if not is_healthy:
                     _log.error("Service unhealthy")
         """
-        raise NotImplementedError
+        # Try a simple publish/consume operation
+        with suppress(Exception):
+            # Just check if stream is accessible
+            # In production might do a ping or test operation
+            test_successful = bool(self._stream)
+            return test_successful
+
+        health_status = False
+        return health_status
 
     def get_uptime_seconds(self) -> float:
         """Get service uptime in seconds.
@@ -140,7 +173,10 @@ class IngestService:
                 uptime = service.get_uptime_seconds()
                 print(f"Uptime: {uptime:.2f} seconds")
         """
-        raise NotImplementedError
+        current_time = datetime.now(timezone.utc)
+        uptime_delta = current_time - self._start_time
+        uptime_seconds = uptime_delta.total_seconds()
+        return uptime_seconds
 
     def _validate_request(self, request: IngestRequest) -> None:
         """Validate telemetry request data.
@@ -157,7 +193,116 @@ class IngestService:
                 self._validate_request(request)
                 # Proceeds if valid, raises if invalid
         """
-        raise NotImplementedError
+        validation_errors: list[str] = []
+
+        self._validate_device_fields(request, validation_errors)
+        self._validate_metric_fields(request, validation_errors)
+        self._validate_timestamp_field(request, validation_errors)
+
+        if validation_errors:
+            error_message = "Validation failed: %s"
+            _log.error(error_message, "; ".join(validation_errors))
+            joined_errors = ", ".join(validation_errors)
+            raise InvalidPayloadError(error_message % joined_errors) from None
+
+    def _validate_device_fields(
+        self,
+        request: IngestRequest,
+        validation_errors: list[str]
+    ) -> None:
+        """Validate device-related fields.
+
+        Args:
+            request: Request to validate.
+            validation_errors: List to append errors to.
+        """
+        if not request.device_id or not request.device_id.strip():
+            validation_errors.append("device_id cannot be empty")
+
+        if not request.interface or not request.interface.strip():
+            validation_errors.append("interface cannot be empty")
+
+    def _validate_metric_fields(
+        self,
+        request: IngestRequest,
+        validation_errors: list[str]
+    ) -> None:
+        """Validate metric-related fields.
+
+        Args:
+            request: Request to validate.
+            validation_errors: List to append errors to.
+        """
+        if not request.metric_name or not request.metric_name.strip():
+            validation_errors.append("metric_name cannot be empty")
+
+        if not math.isfinite(request.metric_value):
+            validation_errors.append("metric_value must be finite")
+
+    def _validate_timestamp_field(
+        self,
+        request: IngestRequest,
+        validation_errors: list[str]
+    ) -> None:
+        """Validate timestamp field.
+
+        Args:
+            request: Request to validate.
+            validation_errors: List to append errors to.
+        """
+        if not request.timestamp:
+            validation_errors.append("timestamp cannot be None")
+        elif request.timestamp.tzinfo is None:
+            validation_errors.append("timestamp must be timezone-aware")
+
+    async def _publish_event(self, event: TelemetryEvent) -> str:
+        """Publish event to stream.
+
+        Args:
+            event: Event to publish.
+
+        Returns:
+            Event ID from stream.
+
+        Raises:
+            StreamPublishError: If publish fails.
+        """
+        try:
+            event_id = await self._stream.publish(
+                stream="telemetry",
+                data=self._serialize_event(event)
+            )
+
+            _log.info(
+                "Published telemetry event: event_id=%s, device=%s",
+                event_id,
+                event.device_id
+            )
+
+            return event_id
+
+        except Exception as e:
+            error_message = "Failed to publish event: %s"
+            _log.error(error_message, str(e))
+            raise StreamPublishError(error_message % str(e)) from e
+
+    def _serialize_event(self, event: TelemetryEvent) -> dict[str, str]:
+        """Serialize event to stream format.
+
+        Args:
+            event: Event to serialize.
+
+        Returns:
+            Dictionary with string values for stream.
+        """
+        serialized_data = {
+            "device_id": event.device_id,
+            "interface": event.interface,
+            "metric_name": event.metric_name,
+            "metric_value": str(event.metric_value),
+            "timestamp": event.timestamp.isoformat()
+        }
+        return serialized_data
 
     def _transform_to_event(
         self,
@@ -177,7 +322,15 @@ class IngestService:
                 event = self._transform_to_event(request)
                 # event is now a TelemetryEvent
         """
-        raise NotImplementedError
+        event = TelemetryEvent(
+            device_id=request.device_id,
+            interface=request.interface,
+            metric_name=request.metric_name,
+            metric_value=request.metric_value,
+            timestamp=request.timestamp
+        )
+
+        return event
 
 
 __all__ = [

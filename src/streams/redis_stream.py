@@ -40,8 +40,14 @@ Example:
             )
 """
 
+import logging as _log
 from collections.abc import AsyncIterator
+from contextlib import suppress
 from typing import Any
+
+import redis.asyncio as redis
+
+from src.streams.exceptions import ConsumerGroupError, StreamError
 
 
 class RedisStream:
@@ -90,7 +96,7 @@ class RedisStream:
     __slots__ = ("_client", "_url")
 
     _url: str
-    _client: Any  # redis.asyncio.Redis
+    _client: redis.Redis  # type: ignore[type-arg]
 
     def __init__(self, *, url: str) -> None:
         """Initialize Redis stream connection.
@@ -102,7 +108,14 @@ class RedisStream:
             ValueError: If URL is invalid or empty.
             ConnectionError: If Redis connection cannot be established.
         """
-        raise NotImplementedError
+        if not url or not url.strip():
+            error_message = "Redis URL cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        self._url = url
+        self._client = redis.from_url(url, decode_responses=True)
+        _log.info("Redis stream initialized: url=%s", url)
 
     async def publish(self, stream: str, data: dict[str, Any]) -> str:
         """Publish data to Redis stream using XADD.
@@ -118,7 +131,26 @@ class RedisStream:
             ValueError: If stream name is empty or data is invalid.
             StreamError: If publish operation fails.
         """
-        raise NotImplementedError
+        if not stream or not stream.strip():
+            error_message = "Stream name cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        if not data:
+            error_message = "Data cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        try:
+            # Convert all values to strings for Redis
+            string_data = {k: str(v) for k, v in data.items()}
+            message_id: str = await self._client.xadd(stream, string_data)
+            _log.debug("Published to stream: stream=%s, msg_id=%s", stream, message_id)
+            return message_id
+        except Exception as e:
+            error_message = "Failed to publish to stream: %s"
+            _log.error(error_message, str(e))
+            raise StreamError(error_message % str(e)) from e
 
     async def consume(
         self,
@@ -141,8 +173,57 @@ class RedisStream:
             ConsumerGroupError: If consumer group doesn't exist.
             StreamError: If consumption fails.
         """
-        raise NotImplementedError
-        yield  # Make generator
+        if not stream or not stream.strip():
+            error_message = "Stream name cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        if not group or not group.strip():
+            error_message = "Group name cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        if not consumer_name or not consumer_name.strip():
+            error_message = "Consumer name cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        _log.info("Starting consumption: stream=%s, group=%s, consumer=%s",
+                  stream, group, consumer_name)
+
+        while True:
+            try:
+                # Read from consumer group, blocking for 1 second
+                result = await self._client.xreadgroup(
+                    groupname=group,
+                    consumername=consumer_name,
+                    streams={stream: ">"},
+                    count=10,
+                    block=1000,
+                )
+
+                if not result:
+                    continue
+
+                # Result format: [(stream_name, [(msg_id, data), ...])]
+                for _, messages in result:
+                    for message_id, data in messages:
+                        _log.debug("Consumed message: stream=%s, msg_id=%s",
+                                   stream, message_id)
+                        yield message_id, data
+
+            except redis.ResponseError as e:
+                if "NOGROUP" in str(e):
+                    error_message = "Consumer group does not exist: %s"
+                    _log.error(error_message, group)
+                    raise ConsumerGroupError(error_message % group) from e
+                error_message = "Redis error during consumption: %s"
+                _log.error(error_message, str(e))
+                raise StreamError(error_message % str(e)) from e
+            except Exception as e:
+                error_message = "Failed to consume from stream: %s"
+                _log.error(error_message, str(e))
+                raise StreamError(error_message % str(e)) from e
 
     async def acknowledge(
         self,
@@ -164,7 +245,28 @@ class RedisStream:
             ValueError: If any parameter is empty.
             StreamError: If acknowledgment fails.
         """
-        raise NotImplementedError
+        if not stream or not stream.strip():
+            error_message = "Stream name cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        if not group or not group.strip():
+            error_message = "Group name cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        if not message_id or not message_id.strip():
+            error_message = "Message ID cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        try:
+            await self._client.xack(stream, group, message_id)  # type: ignore[no-untyped-call]
+            _log.debug("Acknowledged message: stream=%s, msg_id=%s", stream, message_id)
+        except Exception as e:
+            error_message = "Failed to acknowledge message: %s"
+            _log.error(error_message, str(e))
+            raise StreamError(error_message % str(e)) from e
 
     async def create_consumer_group(
         self,
@@ -187,11 +289,43 @@ class RedisStream:
             ValueError: If stream or group name is empty.
             StreamError: If group creation fails.
         """
-        raise NotImplementedError
+        if not stream or not stream.strip():
+            error_message = "Stream name cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        if not group or not group.strip():
+            error_message = "Group name cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        try:
+            await self._client.xgroup_create(
+                name=stream,
+                groupname=group,
+                id=start_id,
+                mkstream=True,
+            )
+            _log.info("Created consumer group: stream=%s, group=%s", stream, group)
+        except redis.ResponseError as e:
+            # Ignore if group already exists
+            if "BUSYGROUP" in str(e):
+                _log.debug("Consumer group already exists: stream=%s, group=%s",
+                          stream, group)
+                return
+            error_message = "Failed to create consumer group: %s"
+            _log.error(error_message, str(e))
+            raise StreamError(error_message % str(e)) from e
+        except Exception as e:
+            error_message = "Failed to create consumer group: %s"
+            _log.error(error_message, str(e))
+            raise StreamError(error_message % str(e)) from e
 
     async def close(self) -> None:
         """Close Redis connection."""
-        raise NotImplementedError
+        with suppress(Exception):
+            await self._client.close()
+            _log.info("Redis connection closed")
 
 
 __all__ = ["RedisStream"]

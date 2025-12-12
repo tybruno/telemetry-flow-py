@@ -25,7 +25,8 @@ Example:
         # end:   2025-12-12 10:31:00
 """
 
-from datetime import datetime
+import logging as _log
+from datetime import datetime, timedelta
 
 
 def calculate_window_bounds(
@@ -61,7 +62,28 @@ def calculate_window_bounds(
             # start: 2025-12-12T10:30:00Z (aligned to minute)
             # end:   2025-12-12T10:31:00Z (start + 60 seconds)
     """
-    raise NotImplementedError
+    if not timestamp:
+        error_message = "timestamp cannot be None"
+        _log.error(error_message)
+        raise ValueError(error_message) from None
+
+    if window_size <= 0:
+        error_message = "window_size must be positive: %d"
+        _log.error(error_message, window_size)
+        raise ValueError(error_message % window_size) from None
+
+    # Get timestamp as seconds since epoch
+    epoch_seconds = timestamp.timestamp()
+
+    # Align to window boundary
+    aligned_seconds = (epoch_seconds // window_size) * window_size
+
+    # Create window start and end
+    window_start = datetime.fromtimestamp(aligned_seconds, tz=timestamp.tzinfo)
+    window_end = window_start + timedelta(seconds=window_size)
+
+    bounds = (window_start, window_end)
+    return bounds
 
 
 __all__ = ["calculate_window_bounds"]

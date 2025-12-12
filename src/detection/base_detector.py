@@ -8,6 +8,8 @@ Classes:
     BaseDetector: Abstract base class for detector implementations.
 """
 
+import logging as _log
+import math
 from abc import ABC, abstractmethod
 
 from src.aggregation.models import WindowMetrics
@@ -35,18 +37,6 @@ class BaseDetector(ABC):
                     return self._create_anomaly(metric, ...)
                 return None
     """
-
-    def __init__(self) -> None:
-        """Initialize base detector.
-
-        Args:
-            None.
-
-        Note:
-            Concrete implementations may override this to accept
-            configuration parameters.
-        """
-        raise NotImplementedError
 
     @abstractmethod
     def detect(self, metric: WindowMetrics) -> AnomalyResult | None:
@@ -81,7 +71,15 @@ class BaseDetector(ABC):
         Example:
             self._validate_metric(metric)  # Before detection
         """
-        raise NotImplementedError
+        if not math.isfinite(metric.average):
+            error_message = "Metric average must be finite: %s"
+            _log.error(error_message, metric.average)
+            raise ValueError(error_message % metric.average) from None
+
+        if metric.count <= 0:
+            error_message = "Metric count must be positive: %d"
+            _log.error(error_message, metric.count)
+            raise ValueError(error_message % metric.count) from None
 
     def _create_anomaly(
         self,
@@ -113,7 +111,35 @@ class BaseDetector(ABC):
                 confidence=0.95
             )
         """
-        raise NotImplementedError
+        from datetime import datetime, timezone
+
+        from src.detection.models import AnomalySeverity
+
+        # Convert severity string to enum
+        severity_map = {
+            "low": AnomalySeverity.LOW,
+            "medium": AnomalySeverity.MEDIUM,
+            "high": AnomalySeverity.HIGH,
+            "critical": AnomalySeverity.CRITICAL,
+        }
+        severity_enum = severity_map.get(severity.casefold(), AnomalySeverity.MEDIUM)
+
+        anomaly_result = AnomalyResult(
+            is_anomaly=True,
+            severity=severity_enum,
+            confidence=confidence,
+            description=description,
+            detected_at=datetime.now(timezone.utc),
+            metric_value=metric.average,
+            threshold_value=None,
+            context={
+                "min": metric.minimum,
+                "max": metric.maximum,
+                "stddev": metric.stddev,
+                "count": float(metric.count),
+            }
+        )
+        return anomaly_result
 
     def _format_description(
         self, metric: WindowMetrics, threshold: float, actual_value: float
@@ -139,7 +165,12 @@ class BaseDetector(ABC):
             )
             # "Bandwidth utilization (95.5%) exceeded threshold (90.0%)"
         """
-        raise NotImplementedError
+        description = (
+            f"Metric value ({actual_value:.2f}) exceeded threshold ({threshold:.2f}). "
+            f"Window stats: min={metric.minimum:.2f}, max={metric.maximum:.2f}, "
+            f"stddev={metric.stddev:.2f}, count={metric.count}"
+        )
+        return description
 
 
 __all__ = ["BaseDetector"]

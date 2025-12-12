@@ -39,6 +39,7 @@ Example:
         # POST to http://localhost:8000/telemetry
 """
 
+import sys
 
 from fastapi import FastAPI
 
@@ -133,8 +134,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    import sys
-
     sys.exit(main())
 
 

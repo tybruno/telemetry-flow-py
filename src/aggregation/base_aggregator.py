@@ -8,6 +8,7 @@ Classes:
     BaseAggregator: Abstract base class for aggregator implementations.
 """
 
+import logging as _log
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -54,6 +55,12 @@ class BaseAggregator(ABC):
         Raises:
             ValueError: If window_size_seconds is not positive.
         """
+        if window_size_seconds <= 0:
+            error_message = "Window size must be positive: %d"
+            _log.error(error_message, window_size_seconds)
+            raise ValueError(error_message % window_size_seconds) from None
+
+        self._window_size_seconds = window_size_seconds
 
     @abstractmethod
     async def aggregate(self, event: TelemetryEvent) -> WindowMetrics | None:
@@ -91,7 +98,8 @@ class BaseAggregator(ABC):
             key = self._generate_window_key("router-01", "eth0", "bandwidth")
             # ("router-01", "eth0", "bandwidth")
         """
-        raise NotImplementedError
+        window_key = (device_id, interface, metric_name)
+        return window_key
 
     def _align_to_window_start(self, timestamp: datetime) -> datetime:
         """Align timestamp to window boundary.
@@ -112,7 +120,16 @@ class BaseAggregator(ABC):
             window_start = self._align_to_window_start(event_time)
             # datetime(2025, 12, 12, 10, 30, 0)
         """
-        raise NotImplementedError
+        # Get timestamp in seconds since epoch
+        epoch_seconds = timestamp.timestamp()
+
+        # Align to window boundary
+        window_size = self._window_size_seconds
+        aligned_seconds = (epoch_seconds // window_size) * window_size
+
+        # Convert back to datetime
+        aligned_timestamp = datetime.fromtimestamp(aligned_seconds, tz=timestamp.tzinfo)
+        return aligned_timestamp
 
     def _calculate_window_end(self, window_start: datetime) -> datetime:
         """Calculate window end time from window start.
@@ -132,7 +149,10 @@ class BaseAggregator(ABC):
             end = self._calculate_window_end(start)
             # datetime(2025, 12, 12, 10, 31, 0)
         """
-        raise NotImplementedError
+        from datetime import timedelta
+
+        window_end = window_start + timedelta(seconds=self._window_size_seconds)
+        return window_end
 
 
 __all__ = ["BaseAggregator"]

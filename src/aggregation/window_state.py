@@ -30,8 +30,10 @@ Example:
             last_id = state["last_processed_id"]
 """
 
+import logging as _log
 
 from src.core.protocols import StorageProtocol
+from src.storage.exceptions import StorageError
 
 
 class WorkerStateManager:
@@ -64,7 +66,14 @@ class WorkerStateManager:
         Raises:
             ValueError: If worker_id is empty or invalid.
         """
-        raise NotImplementedError
+        if not worker_id or not worker_id.strip():
+            error_message = "Worker ID cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        self._storage = storage
+        self._worker_id = worker_id
+        _log.info("Worker state manager initialized: worker_id=%s", worker_id)
 
     async def save_state(self, state: dict[str, object]) -> None:
         """Save worker state to persistent storage.
@@ -77,7 +86,20 @@ class WorkerStateManager:
             StorageError: If state persistence fails.
             ValueError: If state dictionary is invalid.
         """
-        raise NotImplementedError
+        if not state:
+            error_message = "State cannot be empty"
+            _log.error(error_message)
+            raise ValueError(error_message) from None
+
+        state_key = self._generate_state_key()
+
+        try:
+            await self._storage.set(state_key, state)
+            _log.debug("Worker state saved: worker_id=%s", self._worker_id)
+        except Exception as e:
+            error_message = "Failed to save worker state: %s"
+            _log.error(error_message, str(e))
+            raise StorageError(error_message % str(e)) from e
 
     async def load_state(self) -> dict[str, object] | None:
         """Load worker state from persistent storage.
@@ -90,7 +112,28 @@ class WorkerStateManager:
         Raises:
             StorageError: If state retrieval fails.
         """
-        raise NotImplementedError
+        state_key = self._generate_state_key()
+
+        try:
+            state: dict[str, object] | None = await self._storage.get(state_key)
+            if state:
+                _log.info("Worker state loaded: worker_id=%s", self._worker_id)
+            else:
+                _log.info("No saved state found: worker_id=%s", self._worker_id)
+            return state
+        except Exception as e:
+            error_message = "Failed to load worker state: %s"
+            _log.error(error_message, str(e))
+            raise StorageError(error_message % str(e)) from e
+
+    def _generate_state_key(self) -> str:
+        """Generate storage key for worker state.
+
+        Returns:
+            Storage key for this worker's state.
+        """
+        state_key = f"worker:state:{self._worker_id}"
+        return state_key
 
 
 __all__ = ["WorkerStateManager"]

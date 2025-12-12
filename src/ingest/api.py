@@ -16,10 +16,12 @@ Example:
         uvicorn.run(app, host="0.0.0.0", port=8000)
 """
 
+import logging as _log
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.ingest.dependencies import get_ingest_service
+from src.ingest.exceptions import InvalidPayloadError, StreamPublishError
 from src.ingest.models import HealthResponse, IngestRequest, IngestResponse
 from src.ingest.service import IngestService
 
@@ -74,7 +76,30 @@ async def ingest_telemetry(
                 "device_id": "router-01"
             }
     """
-    raise NotImplementedError
+    try:
+        response = await service.ingest_telemetry(request)
+
+        _log.info(
+            "Telemetry ingested: event_id=%s, device=%s",
+            response.event_id,
+            request.device_id
+        )
+
+        return response
+
+    except InvalidPayloadError as e:
+        _log.warning("Invalid telemetry payload: %s", str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        ) from e
+
+    except StreamPublishError as e:
+        _log.error("Failed to publish telemetry: %s", str(e))
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service temporarily unavailable"
+        ) from e
 
 
 @router.get(
@@ -105,7 +130,16 @@ async def health_check(
                 "uptime_seconds": 3600.5
             }
     """
-    raise NotImplementedError
+    is_healthy = await service.check_health()
+    uptime = service.get_uptime_seconds()
+
+    response = HealthResponse(
+        status="healthy" if is_healthy else "unhealthy",
+        redis_connected=is_healthy,
+        uptime_seconds=uptime
+    )
+
+    return response
 
 
 __all__ = [

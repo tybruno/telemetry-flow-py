@@ -41,6 +41,7 @@ Example:
         docker-compose up --scale processor=3
 """
 
+import sys
 
 
 async def run_worker() -> None:
@@ -116,8 +117,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    import sys
-
     sys.exit(main())
 
 

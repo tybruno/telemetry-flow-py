@@ -22,12 +22,14 @@ Example:
             return await service.ingest_telemetry(request)
 """
 
+import logging as _log
 
 from src.core.protocols import StreamProtocol
 from src.ingest.service import IngestService
 
 # Global service instance (initialized on startup)
 _service_instance: IngestService | None = None
+_stream_instance: StreamProtocol | None = None
 
 
 def get_stream() -> StreamProtocol:
@@ -47,7 +49,12 @@ def get_stream() -> StreamProtocol:
 
             stream = get_stream()
     """
-    raise NotImplementedError
+    if _stream_instance is None:
+        error_message = "Stream not initialized. Call initialize_service first."
+        _log.error(error_message)
+        raise RuntimeError(error_message) from None
+
+    return _stream_instance
 
 
 def get_ingest_service() -> IngestService:
@@ -71,7 +78,12 @@ def get_ingest_service() -> IngestService:
             ):
                 ...
     """
-    raise NotImplementedError
+    if _service_instance is None:
+        error_message = "Service not initialized. Call initialize_service first."
+        _log.error(error_message)
+        raise RuntimeError(error_message) from None
+
+    return _service_instance
 
 
 def initialize_service(stream: StreamProtocol) -> None:
@@ -91,7 +103,12 @@ def initialize_service(stream: StreamProtocol) -> None:
             stream = RedisStream(url="redis://localhost")
             initialize_service(stream=stream)
     """
-    raise NotImplementedError
+    global _service_instance, _stream_instance
+
+    _stream_instance = stream
+    _service_instance = IngestService(stream=stream)
+
+    _log.info("Ingest service initialized")
 
 
 __all__ = [

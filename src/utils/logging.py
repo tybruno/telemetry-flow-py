@@ -25,6 +25,8 @@ Example:
         _log.info("Application started")
 """
 
+import logging
+import sys
 
 
 def setup_logging(*, log_level: str = "INFO") -> None:
@@ -50,7 +52,33 @@ def setup_logging(*, log_level: str = "INFO") -> None:
             _log.info("Service started")
             _log.warning("High CPU detected")
     """
-    raise NotImplementedError
+    # Validate log level
+    valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    normalized_level = log_level.upper()
+
+    if normalized_level not in valid_levels:
+        error_message = "Invalid log_level: %s. Must be one of: %s"
+        raise ValueError(error_message % (log_level, ", ".join(valid_levels))) from None
+
+    # Get numeric level
+    numeric_level = getattr(logging, normalized_level)
+
+    # Configure root logger
+    logging.basicConfig(
+        level=numeric_level,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+
+    # Set level for all existing loggers
+    for logger_name in logging.root.manager.loggerDict:
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(numeric_level)
+
+    logging.info("Logging configured at level=%s", normalized_level)
 
 
 __all__ = ["setup_logging"]

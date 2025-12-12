@@ -9,6 +9,7 @@ Classes:
         backpressure, error handling, and retries.
 """
 
+import logging as _log
 from collections.abc import AsyncIterator
 
 from src.consumers.backpressure import BackpressureManager
@@ -98,7 +99,21 @@ class TelemetryConsumer:
         Raises:
             ValueError: If any required parameter is None or empty.
         """
-        raise NotImplementedError
+        self._validate_dependency(stream, "stream")
+        self._validate_dependency(deserializer, "deserializer")
+        self._validate_dependency(error_handler, "error_handler")
+        self._validate_dependency(backpressure, "backpressure")
+        self._validate_string_param(stream_name, "stream_name")
+        self._validate_string_param(group_name, "group_name")
+        self._validate_string_param(consumer_name, "consumer_name")
+
+        self._stream = stream
+        self._deserializer = deserializer
+        self._error_handler = error_handler
+        self._backpressure = backpressure
+        self._stream_name = stream_name
+        self._group_name = group_name
+        self._consumer_name = consumer_name
 
     async def consume_events(self) -> AsyncIterator[TelemetryEvent]:
         """Consume and deserialize telemetry events with error handling.
@@ -117,8 +132,25 @@ class TelemetryConsumer:
                 _log.info("Received: %s", event.device_id)
                 await process_event(event)
         """
-        raise NotImplementedError
-        yield  # Make this a generator
+        _log.info(
+            "Starting consumer: stream=%s, group=%s, consumer=%s",
+            self._stream_name,
+            self._group_name,
+            self._consumer_name
+        )
+
+        await self._setup_consumer_group()
+
+        async for message_id, data in await self._stream.consume(
+            stream=self._stream_name,
+            group=self._group_name,
+            consumer_name=self._consumer_name,
+        ):
+            await self._handle_backpressure()
+
+            event = await self._process_and_yield_event(message_id, data)
+            if event:
+                yield event
 
     async def _process_message(
         self,
@@ -138,7 +170,26 @@ class TelemetryConsumer:
         Raises:
             DeserializationError: If message cannot be parsed.
         """
-        raise NotImplementedError
+        _log.debug("Processing message_id=%s", message_id)
+
+        async def deserialize_op(msg_data: dict[str, object]) -> TelemetryEvent:
+            return self._deserializer.deserialize(msg_data)
+
+        # Use error handler for deserialization with retry
+        event: TelemetryEvent = await self._error_handler.with_retry(
+            operation=deserialize_op,
+            message_id=message_id,
+            data=data
+        )
+
+        _log.debug(
+            "Successfully processed message_id=%s: device=%s, metric=%s",
+            message_id,
+            event.device_id,
+            event.metric_name
+        )
+
+        return event
 
     async def _acknowledge_message(self, message_id: str) -> None:
         """Acknowledge successful message processing.
@@ -149,7 +200,111 @@ class TelemetryConsumer:
         Raises:
             ConsumerError: If acknowledgment fails.
         """
-        raise NotImplementedError
+        from src.consumers.exceptions import ConsumerError
+
+        try:
+            await self._stream.acknowledge(
+                stream=self._stream_name,
+                group=self._group_name,
+                message_id=message_id
+            )
+
+            _log.debug("Acknowledged message_id=%s", message_id)
+
+        except Exception as e:
+            error_message = "Failed to acknowledge message_id=%s: %s"
+            _log.error(error_message, message_id, str(e))
+            raise ConsumerError(error_message % (message_id, str(e))) from e
+
+    def _validate_dependency(self, dependency: object, name: str) -> None:
+        """Validate that a dependency is not None.
+
+        Args:
+            dependency: Dependency object to validate.
+            name: Name of dependency for error message.
+
+        Raises:
+            ValueError: If dependency is None.
+        """
+        if not dependency:
+            error_message = "%s cannot be None"
+            _log.error(error_message, name)
+            raise ValueError(error_message % name) from None
+
+    def _validate_string_param(self, value: str, name: str) -> None:
+        """Validate that a string parameter is not empty.
+
+        Args:
+            value: String value to validate.
+            name: Name of parameter for error message.
+
+        Raises:
+            ValueError: If value is None or empty.
+        """
+        if not value or not value.strip():
+            error_message = "%s cannot be empty"
+            _log.error(error_message, name)
+            raise ValueError(error_message % name) from None
+
+    async def _setup_consumer_group(self) -> None:
+        """Create consumer group if it doesn't exist.
+
+        Raises:
+            ConsumerError: If group creation fails.
+        """
+        from src.consumers.exceptions import ConsumerError
+
+        try:
+            await self._stream.create_consumer_group(
+                stream=self._stream_name,
+                group=self._group_name
+            )
+        except Exception as e:
+            _log.error("Failed to create consumer group: %s", str(e))
+            raise ConsumerError("Consumer group creation failed") from e
+
+    async def _handle_backpressure(self) -> None:
+        """Check and wait for backpressure if needed."""
+        if await self._backpressure.should_throttle():
+            _log.warning("Backpressure detected, throttling consumption")
+            await self._backpressure.wait()
+
+    async def _process_and_yield_event(
+        self,
+        message_id: str,
+        data: dict[str, str]
+    ) -> TelemetryEvent | None:
+        """Process message and handle acknowledgment.
+
+        Args:
+            message_id: Stream message ID.
+            data: Raw message data.
+
+        Returns:
+            Processed event or None if processing failed.
+
+        Raises:
+            ConsumerError: If message acknowledgment fails.
+        """
+        try:
+            event = await self._process_message(
+                message_id=message_id,
+                data=data
+            )
+
+            if event:
+                await self._acknowledge_message(message_id)
+                await self._backpressure.record_processed()
+                return event
+
+        except Exception as e:
+            _log.error(
+                "Failed to process message_id=%s: %s",
+                message_id,
+                str(e)
+            )
+
+        return None
 
 
 __all__ = ["TelemetryConsumer"]
