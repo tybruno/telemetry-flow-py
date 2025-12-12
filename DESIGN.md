@@ -4,6 +4,8 @@
 
 This document explains the architectural design decisions for the Distributed Network Telemetry Processing & Anomaly Detection system. The design prioritizes modularity, type safety, testability, and future extensibility while maintaining simplicity and adherence to Python best practices.
 
+**See Also**: [ARCHITECTURE.md](ARCHITECTURE.md) for detailed system architecture, package communication patterns, and deployment guide.
+
 ---
 
 ## Design Philosophy
@@ -33,19 +35,21 @@ This document explains the architectural design decisions for the Distributed Ne
 ```
 take_home/
 ├── src/                      # Main source code
-│   ├── core/                # Shared domain (minimal)
-│   ├── ingest/              # Ingest service (future repo)
-│   ├── processor/           # Processor service (future repo)
-│   ├── streams/             # Stream infrastructure (future library)
-│   ├── storage/             # Storage infrastructure (future library)
-│   ├── alerts/              # Alert infrastructure (future library)
+│   ├── core/                # Shared domain (contracts & models)
+│   ├── ingest/              # Ingest service (HTTP API - future repo)
+│   ├── processor/           # Processor service (Event processing - future repo)
+│   ├── streams/             # Stream infrastructure library (future library)
+│   ├── storage/             # Storage infrastructure library (future library)
+│   ├── alerts/              # Alert infrastructure library (future library)
 │   └── utils/               # Generic utilities (future library)
-├── simulator/               # Device simulator (standalone)
+├── simulator/               # Device simulator (standalone testing tool)
 ├── tests/                   # Test suite (mirrors src/)
 ├── docker/                  # Container configurations
 ├── config/                  # Service configurations
 └── scripts/                 # Development utilities
 ```
+
+**For detailed package responsibilities and communication patterns, see [ARCHITECTURE.md](ARCHITECTURE.md).**
 
 ### Design Rationale
 

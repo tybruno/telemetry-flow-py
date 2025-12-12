@@ -1,17 +1,36 @@
 """Ingest service application entry point.
 
 This module provides the main entry point for the telemetry ingest
-service. Initializes FastAPI application, configures dependencies,
-and starts the HTTP server.
+service, which receives HTTP POST requests from devices/simulators and
+publishes events to Redis Streams for processing.
+
+Architecture:
+    - HTTP API (FastAPI) on port 8000
+    - Validates incoming telemetry data
+    - Publishes to Redis Streams ("telemetry" stream)
+    - Returns message ID acknowledgment
+
+Communication:
+    Input: HTTP POST /telemetry from devices
+    Output: Publishes to Redis Streams for processor consumption
 
 Functions:
     create_app: Create and configure FastAPI application.
+    startup_event: Initialize Redis connections and services.
+    shutdown_event: Clean shutdown of resources.
     main: Entry point for running the service.
 
 Example:
     Running the service::
 
+        # Via Python module
         python -m src.ingest.main
+
+        # Via Docker Compose
+        docker-compose up ingest
+        
+        # Service listens on http://localhost:8000
+        # POST to http://localhost:8000/telemetry
 """
 
 import logging as _log
@@ -19,8 +38,6 @@ import logging as _log
 from fastapi import FastAPI
 
 from src.ingest.api import router
-
-_log = logging.getLogger(__name__)
 
 
 def create_app() -> FastAPI:
@@ -74,13 +91,30 @@ async def shutdown_event() -> None:
 def main() -> None:
     """Main entry point for the ingest service.
 
-    Loads configuration, creates the FastAPI app, and starts
-    the uvicorn server.
+    Loads configuration from environment variables and config files,
+    creates the FastAPI app with all dependencies, and starts the
+    uvicorn ASGI server.
+    
+    Configuration:
+        - INGEST_API_HOST: Host to bind (default: 0.0.0.0)
+        - INGEST_API_PORT: Port to bind (default: 8000)
+        - REDIS_URL: Redis connection URL (required)
+    
+    Services Started:
+        - FastAPI HTTP server (uvicorn)
+        - Redis Streams connection
+        - IngestService with dependency injection
 
     Example:
         Running the service::
 
+            # With defaults
             python -m src.ingest.main
+            
+            # With custom port
+            INGEST_API_PORT=9000 python -m src.ingest.main
+            
+            # Service available at http://localhost:8000/telemetry
     """
     raise NotImplementedError
 
