@@ -1,0 +1,4 @@
+# Development Environment Overrides
+
+redis_url: "redis://localhost:6379"
+log_level: "DEBUG"

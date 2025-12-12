@@ -1,0 +1,10 @@
+# Ingest Service Configuration
+
+redis_url: "redis://localhost:6379"
+log_level: "INFO"
+environment: "development"
+
+# Ingest-specific settings
+api_host: "0.0.0.0"
+api_port: 8000
+max_payload_size: 1048576  # 1MB

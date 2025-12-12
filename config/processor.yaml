@@ -1,0 +1,10 @@
+# Processor Worker Configuration
+
+redis_url: "redis://localhost:6379"
+log_level: "INFO"
+environment: "development"
+
+# Processor-specific settings
+window_size_seconds: 60
+anomaly_threshold: 90.0
+consumer_group: "telemetry-processors"
