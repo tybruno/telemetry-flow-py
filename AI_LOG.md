@@ -308,7 +308,7 @@ Created virtual environment, installed all dependencies from requirements.txt an
 ```
 I want you to look through all of the files and source, and I just want you to look for design level issues. If there's any design level issues, anything we didn't account for, anything incorrect, that's all. And also verify that it matches with the requirements as well.
 
-[Follow-up] I think you should go ahead and fix those issues. You need to probably update our design.md where I needed to account for that so it's accurate after you make the changes to the actual placeholders that we have. I think also we need to focus on your third point, telemetry consumer redundancy. Let's think of a better way to design this. Because you're right, it does just, it is, you're not going to need it because it does just, all it does is wrap the stream protocol. Maybe the telemetry consumer should be able to consume and also handle the real responsibilities like backpressure error handling, retries, deserialization, validation. I'm not sure if we should also have another object that telemetry consumer uses to execute those responsibilities.
+[Follow-up] I think you should go ahead and fix those issues. You need to probably update our design.md where I needed to account for that so it's accurate after you make the changes to the actual placeholders that we have. I think also we need to focus on your third point, telemetry consumer redundancy. Let's think of a better way to design this. Because you're right, it does just wrap the stream protocol. Maybe the telemetry consumer should be able to consume and also handle the real responsibilities like backpressure error handling, retries, deserialization, validation. I'm not sure if we should also have another object that telemetry consumer uses to execute those responsibilities.
 ```
 
 ### AI Response
@@ -349,5 +349,88 @@ Performed systematic design review identifying 15 issues (5 critical, 10 minor).
 - `DESIGN.md` - Added "Architecture Evolution" section documenting all design changes with justifications
 
 **Commit:** 50f60a8
+
+## Interaction 12: Design Documentation Refinement
+**Tool:** GitHub Copilot (Claude Sonnet 4.5)
+**Mode:** Chat
+**Instructions File:** `.github/copilot-instructions.md`
+**Purpose:** Restructure DESIGN.md to present architectural improvements as cohesive design rather than incremental evolution
+
+### Prompt
+```
+In this design.md file, let's not talk about the evolution per se. Just change what you need to change to update what needs to be updated to convey the design, the updated design. We don't need to note the architecture evolution. If we do say that, we need to say it throughout the whole file and update what needs to be updated.
+```
+
+### AI Response
+Restructured DESIGN.md to integrate all architectural improvements throughout the document as the current design rather than a separate evolution section. Updated 6 major sections to incorporate acknowledgment protocol, consumer composition, per-metric thresholds, ProcessorConfig, and enhanced exception hierarchy. Removed standalone "Architecture Evolution" section. Document now presents cohesive design without "before/after" framing.
+
+**Files Created/Modified:**
+- `DESIGN.md` - Integrated architectural improvements throughout document (138 insertions, 222 deletions)
+  - Updated Protocol-Driven Architecture with `acknowledge()` and `create_consumer_group()` examples
+  - Updated Robust Consumer Design section with composition pattern and 4-component pipeline
+  - Updated Configuration section with ProcessorConfig including per-metric thresholds
+  - Updated Dependency Injection section with complete TelemetryWorker dependencies
+  - Updated Exception Hierarchy with DeserializationError and MaxRetriesExceededError
+  - Removed separate "Architecture Evolution" section entirely
+
+**Commit:** 17a2759
+
+## Interaction 13: Protocol + Abstract Base Class Hybrid Pattern
+**Tool:** GitHub Copilot (Claude Sonnet 4.5)
+**Mode:** Chat
+**Instructions File:** `.github/copilot-instructions.md`
+**Purpose:** Add abstract base classes for shared implementation logic while maintaining protocol-driven flexibility
+
+### Prompt
+```
+I think though for those classes that implement the protocol...we could probably use an abstract base class to extend it as well, right? Show me what you would think for that.
+
+[Follow-up] Perfect. Let's go ahead and add those ABC classes as stubs. And also make sure to update our design.md accordingly. Because we say we don't use abstract based classes, but we do now. And explain why and for what we use it for. Remember, **NO IMPLEMENTATION ONLY STUB CREATION**
+```
+
+### AI Response
+Implemented hybrid protocol+ABC approach combining contract flexibility (protocols) with implementation efficiency (abstract base classes). Created three ABC base classes with shared utility methods while maintaining protocol satisfaction through structural typing. Updated DESIGN.md to explain when/why to use protocols vs ABCs vs both patterns.
+
+**Hybrid Pattern Benefits:**
+- **Protocols**: Type flexibility, structural typing, third-party integration
+- **ABCs**: Code reuse, shared validation/logging, DRY implementation  
+- **Both**: Contract enforcement + implementation efficiency
+
+**Pattern Usage Guidelines:**
+- **Protocol Only**: Flexible contracts with varied implementations (AlerterProtocol)
+- **Protocol + ABC**: Shared validation/utilities with similar implementations (StorageProtocol + BaseStorage)
+- **ABC Only**: Strict inheritance for internal implementations (rare in this codebase)
+
+**Files Created/Modified:**
+- `src/storage/base.py` - NEW: BaseStorage ABC with shared validation and logging utilities
+  - `_validate_key()` for consistent key validation across storage backends
+  - `_log_operation()` for uniform operation logging
+  - Abstract methods: `store()`, `retrieve()`
+  
+- `src/processor/base_detector.py` - NEW: BaseDetector ABC with shared validation and formatting
+  - `_validate_metric()` for input validation across all detectors
+  - `_create_anomaly()` for consistent anomaly object creation
+  - `_format_description()` for human-readable descriptions
+  - Abstract method: `detect()`
+  
+- `src/processor/base_aggregator.py` - NEW: BaseAggregator ABC with shared window utilities
+  - `_generate_window_key()` for consistent window tracking
+  - `_align_to_window_start()` for timestamp boundary alignment
+  - `_calculate_window_end()` for window completion detection
+  - Abstract method: `aggregate()`
+
+- `src/storage/redis_store.py` - Updated to inherit from BaseStorage
+- `src/processor/detector.py` - Updated to inherit from BaseDetector  
+- `src/processor/aggregator.py` - Updated to inherit from BaseAggregator
+
+- `DESIGN.md` - Comprehensive protocol+ABC hybrid documentation
+  - Changed section title to "Why Protocols as Primary Contracts?"
+  - Added 5000+ word hybrid approach section with decision matrix
+  - Included three detailed examples (Storage, Detector, Aggregator)
+  - Documented when to use each pattern and when to avoid ABCs
+  - Added file organization guidance for base classes
+
+**Commit:** a36dbc6
+
 
 
