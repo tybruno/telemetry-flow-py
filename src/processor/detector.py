@@ -1,7 +1,7 @@
 """Anomaly detection for aggregated metrics.
 
 Class:
-    ThresholdDetector: Threshold-based anomaly detector.
+    ThresholdDetector: Metric-specific threshold-based detector.
 """
 
 import logging
@@ -12,20 +12,49 @@ _log = logging.getLogger(__name__)
 
 
 class ThresholdDetector:
-    """Threshold-based anomaly detector.
+    """Metric-specific threshold-based anomaly detector.
 
-    Detects anomalies when metrics exceed configured thresholds.
+    Compares metrics against per-metric thresholds with fallback
+    default. Different metrics can have different sensitivities.
 
     Attributes:
-        _threshold: Threshold value for anomaly detection.
+        _thresholds: Metric-specific threshold values.
+        _default_threshold: Fallback for unconfigured metrics.
+
+    Example:
+        detector = ThresholdDetector(
+            thresholds={
+                "bandwidth_utilization": 90.0,
+                "error_rate": 1.0,
+                "packet_loss": 0.5,
+            },
+            default_threshold=80.0
+        )
+
+        if detector.is_anomaly(metric):
+            result = detector.create_anomaly_result(metric)
     """
 
-    __slots__ = ("_threshold",)
+    __slots__ = ("_thresholds", "_default_threshold")
 
-    _threshold: float
+    _thresholds: dict[str, float]
+    _default_threshold: float
 
-    def __init__(self, *, threshold: float) -> None:
-        """Initialize detector with threshold."""
+    def __init__(
+        self,
+        *,
+        thresholds: dict[str, float],
+        default_threshold: float = 80.0,
+    ) -> None:
+        """Initialize with metric-specific thresholds.
+
+        Args:
+            thresholds: Per-metric threshold values.
+            default_threshold: Fallback for unconfigured metrics.
+
+        Raises:
+            ValueError: If thresholds or default is negative.
+        """
         raise NotImplementedError
 
     def is_anomaly(self, metric: AggregatedMetric) -> bool:

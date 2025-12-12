@@ -101,6 +101,75 @@ class StreamProtocol(Protocol):
                     consumer_name="worker-01"
                 ):
                     await process_event(data)
+                    await stream.acknowledge(
+                        stream="telemetry",
+                        group="processors",
+                        message_id=msg_id
+                    )
+        """
+        ...
+
+    async def acknowledge(
+        self,
+        stream: str,
+        group: str,
+        message_id: str,
+    ) -> None:
+        """Acknowledge successful processing of a message.
+
+        Removes message from pending list for at-least-once delivery.
+
+        Args:
+            stream: Name of the stream.
+            group: Consumer group that received the message.
+            message_id: ID of the message to acknowledge.
+
+        Raises:
+            StreamError: If acknowledgment fails.
+
+        Example:
+            Acknowledging after processing::
+
+                async for msg_id, data in stream.consume(...):
+                    try:
+                        await process(data)
+                        await stream.acknowledge(
+                            stream="telemetry",
+                            group="processors",
+                            message_id=msg_id
+                        )
+                    except Exception:
+                        # Message stays in pending for retry
+                        _log.error("Processing failed for %s", msg_id)
+        """
+        ...
+
+    async def create_consumer_group(
+        self,
+        stream: str,
+        group: str,
+        start_id: str = "$",
+    ) -> None:
+        """Create a consumer group for distributed processing.
+
+        Must be called before consumers can join the group.
+
+        Args:
+            stream: Name of the stream.
+            group: Name for the consumer group.
+            start_id: Starting position ("$" for new, "0" for all).
+
+        Raises:
+            StreamError: If group creation fails.
+
+        Example:
+            Creating consumer group::
+
+                await stream.create_consumer_group(
+                    stream="telemetry",
+                    group="processors",
+                    start_id="$"
+                )
         """
         ...
 

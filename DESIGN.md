@@ -734,8 +734,7 @@ class AlertSeverity(Enum):
 
 **Pattern**:
 ```python
-import logging
-_log = logging.getLogger(__name__)
+import logging as _log
 
 # Structured logging with context
 _log.info(
@@ -861,6 +860,213 @@ _log.error(
 - Only necessary abstractions
 - Clear naming conventions
 - Self-documenting structure
+
+---
+
+## Architecture Evolution (Design Review Outcomes)
+
+### Overview
+
+After comprehensive design review against assignment requirements, several critical enhancements were made to ensure robust distributed processing, proper error handling, and production-grade reliability.
+
+### 1. Stream Protocol Enhancements
+
+**Issue**: Missing message acknowledgment and consumer group initialization methods.
+
+**Solution**: Extended `StreamProtocol` with two critical methods:
+
+```python
+async def acknowledge(
+    self,
+    stream: str,
+    group: str,
+    message_id: str,
+) -> None:
+    """Acknowledge successful message processing."""
+    ...
+
+async def create_consumer_group(
+    self,
+    stream: str,
+    group: str,
+    start_id: str = "$",
+) -> None:
+    """Create consumer group for distributed processing."""
+    ...
+```
+
+**Justification**:
+- **At-Least-Once Delivery**: Messages remain in pending list until explicitly acknowledged, preventing data loss on worker crashes
+- **Consumer Group Management**: Required before workers can join and consume from Redis Streams
+- **Production Reliability**: Proper acknowledgment enables retry of failed messages and prevents duplicate processing
+
+### 2. Enhanced TelemetryConsumer Architecture
+
+**Issue**: Original consumer was a thin wrapper around StreamProtocol with no real responsibilities.
+
+**Solution**: Redesigned consumer as robust orchestrator using composition pattern:
+
+```python
+class TelemetryConsumer:
+    """Handles complete consumption pipeline."""
+    
+    _stream: StreamProtocol              # Stream operations
+    _deserializer: MessageDeserializer   # Raw data → TelemetryEvent
+    _error_handler: ConsumerErrorHandler # Retry logic & error classification
+    _backpressure: BackpressureManager   # Rate limiting
+```
+
+**New Supporting Components**:
+
+- **MessageDeserializer** (`src/processor/deserializer.py`): Parses raw stream data into typed `TelemetryEvent` objects with validation
+- **ConsumerErrorHandler** (`src/processor/error_handler.py`): Implements exponential backoff retries, error classification, and dead letter handling
+
+**Justification**:
+- **Single Responsibility**: Each component handles one aspect (deserialization, error handling, backpressure)
+- **Composition Over Inheritance**: Components are injected dependencies, not inherited behavior
+- **Testability**: Each component can be mocked and tested independently
+- **Production-Ready**: Handles real-world concerns (malformed data, transient failures, overload)
+
+### 3. TelemetryWorker Dependency Injection
+
+**Issue**: Worker was missing `TumblingWindowAggregator` and `ThresholdDetector` dependencies.
+
+**Solution**: Added missing dependencies to constructor:
+
+```python
+class TelemetryWorker:
+    def __init__(
+        self,
+        *,
+        consumer: TelemetryConsumer,
+        aggregator: TumblingWindowAggregator,  # NEW
+        detector: ThresholdDetector,           # NEW
+        storage: StorageProtocol,
+        alerter: AlerterProtocol,
+    ) -> None:
+        """Initialize with all pipeline components."""
+```
+
+**Justification**:
+- **Complete Pipeline**: Worker now has all components needed for end-to-end processing
+- **Dependency Injection**: Enables testing with mock aggregator/detector
+- **Clear Responsibilities**: Worker orchestrates, delegates actual work to specialists
+
+### 4. Per-Metric Threshold Detection
+
+**Issue**: Single threshold value insufficient for different metric types (bandwidth vs. errors vs. packet loss).
+
+**Solution**: Enhanced `ThresholdDetector` to accept metric-specific thresholds:
+
+```python
+class ThresholdDetector:
+    def __init__(
+        self,
+        *,
+        thresholds: dict[str, float],  # Per-metric thresholds
+        default_threshold: float = 80.0,
+    ) -> None:
+        """Initialize with metric-specific thresholds.
+        
+        Example:
+            detector = ThresholdDetector(
+                thresholds={
+                    "bandwidth_utilization": 90.0,
+                    "error_rate": 1.0,
+                    "packet_loss": 0.5,
+                }
+            )
+        """
+```
+
+**Justification**:
+- **Metric-Specific Sensitivity**: Bandwidth may be critical at 90%, but 1% error rate is already concerning
+- **Flexible Configuration**: Per-metric thresholds loaded from config file
+- **Backward Compatible**: Falls back to default threshold for unconfigured metrics
+
+### 5. ProcessorConfig Class
+
+**Issue**: Configuration values in `config/processor.yaml` had no corresponding Python class to load them.
+
+**Solution**: Created `ProcessorConfig` using Pydantic Settings:
+
+```python
+class ProcessorConfig(BaseSettings):
+    """Type-safe processor configuration."""
+    
+    window_size_seconds: int = 60
+    consumer_group: str = "telemetry-processors"
+    max_retries: int = 3
+    default_threshold: float = 80.0
+    metric_thresholds: dict[str, float] = {}
+    stream_name: str = "telemetry"
+    redis_url: str = "redis://localhost:6379"
+    
+    def get_threshold(self, metric_name: str) -> float:
+        """Get metric-specific or default threshold."""
+        return self.metric_thresholds.get(
+            metric_name, 
+            self.default_threshold
+        )
+```
+
+**Justification**:
+- **Type Safety**: Pydantic validates configuration at startup
+- **Environment Overrides**: Can override YAML values via `PROCESSOR_*` environment variables
+- **Self-Documenting**: Configuration schema is the Python class itself
+- **Centralized**: Single source of truth for all processor settings
+
+### 6. Aggregator State Tracking
+
+**Issue**: Aggregator had no attributes to track per-device/interface/metric window state.
+
+**Solution**: Added `_windows` dictionary for state tracking:
+
+```python
+class TumblingWindowAggregator:
+    __slots__ = ("_window_size", "_window_delta", "_windows")
+    
+    _windows: dict[tuple[str, str, str], WindowState]
+    # Key: (device_id, interface, metric_name)
+    # Value: WindowState for current window
+```
+
+**Justification**:
+- **Per-Device Aggregation**: Each device/interface/metric gets independent window
+- **Tumbling Window Semantics**: Tracks window boundaries and accumulates events
+- **Memory Efficiency**: Uses `__slots__` to minimize overhead
+
+### 7. Additional Exception Types
+
+**Issue**: New components needed specific exception types for error handling.
+
+**Solution**: Added to `src/processor/exceptions.py`:
+
+```python
+class DeserializationError(ProcessorError):
+    """Message deserialization failure."""
+
+class MaxRetriesExceededError(ProcessorError):
+    """Retry limit exceeded."""
+```
+
+**Justification**:
+- **Specific Error Handling**: Can catch and handle deserialization vs. retry failures differently
+- **Diagnostic Context**: Exception type immediately indicates failure category
+- **Hierarchical**: Both inherit from `ProcessorError` for catch-all handling
+
+### Impact Summary
+
+These enhancements address critical gaps identified during design review:
+
+1. **Reliability**: Acknowledgment protocol ensures no message loss
+2. **Error Handling**: Comprehensive retry logic and deserialization validation
+3. **Flexibility**: Per-metric thresholds enable nuanced anomaly detection
+4. **Completeness**: All components have necessary dependencies
+5. **Configuration**: Type-safe config loading with validation
+6. **Production-Ready**: Real-world concerns (backpressure, retries, state tracking) addressed
+
+The architecture now supports robust distributed processing with proper error handling, rate limiting, and anomaly detection suitable for production deployment.
 
 ---
 

@@ -8,7 +8,7 @@ applyTo: '**'
 - Write Pythonic, idiomatic code following DRY and SOLID principles
 - Use strong typing, defensive programming, and meaningful logging
 - Prioritize readability, modularity, efficiency and testability
-- Use `_log = logging.getLogger(__name__)` for module-level logging
+- Use `import logging as _log` for module-level logging
 - Always assign variables before returning (no direct expression returns)
 - **Favor composition over inheritance** - inject dependencies, use delegation patterns, compose behavior from smaller components
 

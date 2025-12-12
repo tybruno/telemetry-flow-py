@@ -65,6 +65,36 @@ class RedisStream:
         raise NotImplementedError
         yield  # Make generator
 
+    async def acknowledge(
+        self,
+        stream: str,
+        group: str,
+        message_id: str,
+    ) -> None:
+        """Acknowledge message processing with XACK.
+
+        Args:
+            stream: Stream name.
+            group: Consumer group name.
+            message_id: Message ID to acknowledge.
+        """
+        raise NotImplementedError
+
+    async def create_consumer_group(
+        self,
+        stream: str,
+        group: str,
+        start_id: str = "$",
+    ) -> None:
+        """Create consumer group with XGROUP CREATE.
+
+        Args:
+            stream: Stream name.
+            group: Consumer group name.
+            start_id: Starting position.
+        """
+        raise NotImplementedError
+
     async def close(self) -> None:
         """Close Redis connection."""
         raise NotImplementedError
