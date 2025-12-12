@@ -1,7 +1,33 @@
-"""Worker state management.
+"""Worker state management for processor recovery.
 
-Class:
-    WorkerStateManager: Manages worker state persistence.
+This module provides state persistence and recovery functionality for
+processor workers, enabling graceful recovery from failures.
+
+Classes:
+    WorkerStateManager: Manages worker state persistence and recovery.
+
+Example:
+    Basic state management usage::
+
+        from aggregation import WorkerStateManager
+        from storage import RedisStore
+
+        storage = RedisStore(url="redis://localhost")
+        manager = WorkerStateManager(
+            storage=storage,
+            worker_id="worker-01"
+        )
+
+        # Save state
+        await manager.save_state({
+            "last_processed_id": "msg-12345",
+            "windows": {...}
+        })
+
+        # Recover state
+        state = await manager.load_state()
+        if state:
+            last_id = state["last_processed_id"]
 """
 
 
@@ -29,22 +55,40 @@ class WorkerStateManager:
         storage: StorageProtocol,
         worker_id: str,
     ) -> None:
-        """Initialize state manager."""
+        """Initialize state manager.
+
+        Args:
+            storage: Storage protocol implementation for persistence.
+            worker_id: Unique identifier for this worker instance.
+
+        Raises:
+            ValueError: If worker_id is empty or invalid.
+        """
         raise NotImplementedError
 
     async def save_state(self, state: dict[str, object]) -> None:
-        """Save worker state.
+        """Save worker state to persistent storage.
 
         Args:
-            state: State dictionary to persist.
+            state: State dictionary to persist. Typically contains
+                last processed message ID and window states.
+
+        Raises:
+            StorageError: If state persistence fails.
+            ValueError: If state dictionary is invalid.
         """
         raise NotImplementedError
 
     async def load_state(self) -> dict[str, object] | None:
-        """Load worker state.
+        """Load worker state from persistent storage.
 
         Returns:
-            Saved state if exists, None otherwise.
+            Saved state dictionary if exists, None if no state found.
+            State typically contains last processed message ID and
+            window states for recovery.
+
+        Raises:
+            StorageError: If state retrieval fails.
         """
         raise NotImplementedError
 

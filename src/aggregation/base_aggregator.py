@@ -49,11 +49,11 @@ class BaseAggregator(ABC):
 
         Args:
             window_size_seconds: Size of aggregation window in seconds.
+                Must be positive.
 
         Raises:
-            ValueError: If window size is not positive.
+            ValueError: If window_size_seconds is not positive.
         """
-        raise NotImplementedError
 
     @abstractmethod
     async def aggregate(self, event: TelemetryEvent) -> WindowMetrics | None:

@@ -37,7 +37,15 @@ class BaseDetector(ABC):
     """
 
     def __init__(self) -> None:
-        """Initialize base detector."""
+        """Initialize base detector.
+
+        Args:
+            None.
+
+        Note:
+            Concrete implementations may override this to accept
+            configuration parameters.
+        """
         raise NotImplementedError
 
     @abstractmethod

@@ -1,6 +1,9 @@
 """Message deserialization for telemetry events.
 
-Class:
+This module provides message parsing and validation, converting raw stream
+data into structured TelemetryEvent domain models.
+
+Classes:
     MessageDeserializer: Deserializes raw stream data to TelemetryEvent.
 """
 
@@ -15,6 +18,9 @@ class MessageDeserializer:
 
     Handles parsing, type conversion, and validation of raw message data
     from the stream into structured TelemetryEvent domain models.
+
+    Attributes:
+        This class has no instance attributes. All methods are stateless.
 
     Example:
         deserializer = MessageDeserializer()

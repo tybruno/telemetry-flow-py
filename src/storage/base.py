@@ -43,6 +43,10 @@ class BaseStorage(ABC):
 
         Args:
             connection: Optional connection object to storage backend.
+                Can be None if connection is established later.
+
+        Raises:
+            ValueError: If connection is invalid or cannot be established.
         """
         raise NotImplementedError
 

@@ -1,7 +1,29 @@
 """Telemetry processor worker orchestration.
 
-Class:
+This module provides the main processor worker that orchestrates the
+complete telemetry processing pipeline: consumption, aggregation,
+detection, and alerting.
+
+Classes:
     TelemetryWorker: Main processor worker orchestrating the pipeline.
+
+Example:
+    Creating and running a processor worker::
+
+        from processor import TelemetryWorker
+        from consumers import TelemetryConsumer
+        from aggregation import TumblingWindowAggregator
+        from detection import ThresholdDetector
+
+        worker = TelemetryWorker(
+            consumer=telemetry_consumer,
+            aggregator=TumblingWindowAggregator(window_size=60),
+            detector=ThresholdDetector(thresholds={"cpu": 90.0}),
+            storage=redis_store,
+            alerter=console_alerter
+        )
+
+        await worker.start()  # Runs until stopped
 """
 
 
@@ -82,11 +104,34 @@ class TelemetryWorker:
         raise NotImplementedError
 
     async def start(self) -> None:
-        """Start processing telemetry events."""
+        """Start processing telemetry events.
+
+        Begins consuming events from stream, aggregating metrics,
+        detecting anomalies, and sending alerts. Runs until stop()
+        is called.
+
+        Raises:
+            ConsumerError: If stream consumption fails critically.
+            StorageError: If state persistence fails.
+            RuntimeError: If worker is already running.
+
+        Example:
+            await worker.start()  # Blocks until stopped
+        """
         raise NotImplementedError
 
     async def stop(self) -> None:
-        """Stop processing gracefully."""
+        """Stop processing gracefully.
+
+        Signals the worker to stop processing, waits for current
+        message to complete, saves state, and closes connections.
+
+        Raises:
+            StorageError: If final state save fails.
+
+        Example:
+            await worker.stop()  # Graceful shutdown
+        """
         raise NotImplementedError
 
 

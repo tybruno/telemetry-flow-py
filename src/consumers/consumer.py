@@ -1,6 +1,10 @@
 """Stream consumer for telemetry events.
 
-Class:
+This module provides a robust stream consumer that handles the complete
+message consumption pipeline including deserialization, validation,
+backpressure management, error handling, and acknowledgment.
+
+Classes:
     TelemetryConsumer: Consumes events with deserialization, validation,
         backpressure, error handling, and retries.
 """

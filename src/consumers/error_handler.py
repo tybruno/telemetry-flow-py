@@ -1,6 +1,9 @@
 """Error handling and retry logic for stream consumers.
 
-Class:
+This module provides robust error handling with exponential backoff retry
+logic, error classification, and dead letter handling for failed messages.
+
+Classes:
     ConsumerErrorHandler: Handles errors and retries for message processing.
 """
 

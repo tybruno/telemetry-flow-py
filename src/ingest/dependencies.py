@@ -3,9 +3,13 @@
 This module provides dependency injection functions for FastAPI endpoints.
 Manages service lifecycle and dependency wiring.
 
+Classes:
+    None.
+
 Functions:
     get_stream: Get stream protocol implementation.
     get_ingest_service: Get ingest service instance.
+    initialize_service: Initialize service with dependencies.
 
 Example:
     Using dependencies in endpoints::

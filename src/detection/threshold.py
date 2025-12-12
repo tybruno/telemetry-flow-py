@@ -1,7 +1,31 @@
-"""Anomaly detection for aggregated metrics.
+"""Threshold-based anomaly detection for aggregated metrics.
 
-Class:
+This module provides threshold-based anomaly detection with metric-specific
+thresholds and fallback defaults. Different metrics can have different
+sensitivity levels.
+
+Classes:
     ThresholdDetector: Metric-specific threshold-based detector.
+
+Example:
+    Basic threshold detection usage::
+
+        from detection import ThresholdDetector
+        from aggregation.models import WindowMetrics
+
+        detector = ThresholdDetector(
+            thresholds={
+                "cpu_utilization": 90.0,
+                "bandwidth_utilization": 95.0,
+                "error_rate": 1.0,
+            },
+            default_threshold=80.0
+        )
+
+        metric = WindowMetrics(...)
+        if detector.is_anomaly(metric):
+            result = detector.create_anomaly_result(metric)
+            print(f"Anomaly: {result.description}")
 """
 
 
@@ -57,13 +81,19 @@ class ThresholdDetector(BaseDetector):
         raise NotImplementedError
 
     def is_anomaly(self, metric: WindowMetrics) -> bool:
-        """Check if aggregated metric is anomalous.
+        """Check if aggregated metric exceeds threshold.
+
+        Compares metric value against configured threshold for that metric
+        type, or default threshold if not configured.
 
         Args:
             metric: Aggregated metric to check.
 
         Returns:
-            True if anomaly detected.
+            True if metric value exceeds threshold, False otherwise.
+
+        Raises:
+            ValueError: If metric is invalid or missing required fields.
         """
         raise NotImplementedError
 
@@ -71,13 +101,19 @@ class ThresholdDetector(BaseDetector):
         self,
         metric: WindowMetrics,
     ) -> AnomalyResult:
-        """Create anomaly result from metric.
+        """Create detailed anomaly result from metric.
+
+        Generates AnomalyResult with severity, description, and confidence
+        based on how much the metric exceeded the threshold.
 
         Args:
             metric: Aggregated metric that triggered anomaly.
 
         Returns:
-            AnomalyResult with details.
+            AnomalyResult with severity, description, and confidence.
+
+        Raises:
+            ValueError: If metric is invalid or does not represent an anomaly.
         """
         raise NotImplementedError
 

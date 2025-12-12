@@ -1,7 +1,32 @@
 """Time-window aggregation for telemetry metrics.
 
-Class:
-    TumblingWindowAggregator: Tumbling window aggregation.
+This module provides tumbling window aggregation for telemetry events,
+calculating statistical metrics over fixed-size, non-overlapping time
+windows.
+
+Classes:
+    TumblingWindowAggregator: Tumbling window aggregation implementation.
+
+Example:
+    Basic usage of tumbling window aggregation::
+
+        from aggregation import TumblingWindowAggregator
+        from core.models import TelemetryEvent
+        from datetime import datetime, timezone
+
+        aggregator = TumblingWindowAggregator(window_size=60)
+
+        event = TelemetryEvent(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
+            metric_value=85.5,
+            timestamp=datetime.now(timezone.utc)
+        )
+
+        result = await aggregator.aggregate(event)
+        if result:  # Window completed
+            print(f"Average: {result.avg_value}")
 """
 
 from datetime import timedelta
@@ -58,6 +83,9 @@ class TumblingWindowAggregator(BaseAggregator):
 
         Returns:
             WindowMetrics if window completed, None if still accumulating.
+
+        Raises:
+            ValueError: If event has invalid timestamp or metric value.
         """
         raise NotImplementedError
 
