@@ -8,11 +8,9 @@ Classes:
     BaseStorage: Abstract base class for storage implementations.
 """
 
-import logging
+import logging as _log
 from abc import ABC, abstractmethod
 from typing import Any, Optional
-
-_log = logging.getLogger(__name__)
 
 
 class BaseStorage(ABC):

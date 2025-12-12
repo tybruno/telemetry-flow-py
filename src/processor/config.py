@@ -4,11 +4,9 @@ Class:
     ProcessorConfig: Processor-specific configuration settings.
 """
 
-import logging
+import logging as _log
 
 from pydantic_settings import BaseSettings
-
-_log = logging.getLogger(__name__)
 
 
 class ProcessorConfig(BaseSettings):

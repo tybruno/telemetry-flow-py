@@ -18,12 +18,10 @@ Example:
             return await service.ingest_telemetry(request)
 """
 
-import logging
+import logging as _log
 
 from src.core.protocols import StreamProtocol
 from src.ingest.service import IngestService
-
-_log = logging.getLogger(__name__)
 
 # Global service instance (initialized on startup)
 _service_instance: IngestService | None = None

@@ -3,8 +3,6 @@
 Provides base alerter functionality.
 """
 
-import logging
-
-_log = logging.getLogger(__name__)
+import logging as _log
 
 __all__: list[str] = []

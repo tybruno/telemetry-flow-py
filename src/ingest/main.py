@@ -14,7 +14,7 @@ Example:
         python -m src.ingest.main
 """
 
-import logging
+import logging as _log
 
 from fastapi import FastAPI
 

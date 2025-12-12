@@ -4,12 +4,10 @@ Class:
     ThresholdDetector: Metric-specific threshold-based detector.
 """
 
-import logging
+import logging as _log
 
 from src.processor.base_detector import BaseDetector
 from src.processor.models import AggregatedMetric, AnomalyResult
-
-_log = logging.getLogger(__name__)
 
 
 class ThresholdDetector(BaseDetector):

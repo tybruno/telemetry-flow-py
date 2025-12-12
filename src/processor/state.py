@@ -4,11 +4,9 @@ Class:
     WorkerStateManager: Manages worker state persistence.
 """
 
-import logging
+import logging as _log
 
 from src.core.protocols import StorageProtocol
-
-_log = logging.getLogger(__name__)
 
 
 class WorkerStateManager:

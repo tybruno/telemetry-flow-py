@@ -8,13 +8,11 @@ Classes:
     BaseDetector: Abstract base class for detector implementations.
 """
 
-import logging
+import logging as _log
 from abc import ABC, abstractmethod
 from datetime import datetime
 
 from src.processor.models import AggregatedMetric, Anomaly
-
-_log = logging.getLogger(__name__)
 
 
 class BaseDetector(ABC):

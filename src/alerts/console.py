@@ -4,10 +4,8 @@ Class:
     ConsoleAlerter: Console output alerter.
 """
 
-import logging
+import logging as _log
 from typing import Any
-
-_log = logging.getLogger(__name__)
 
 
 class ConsoleAlerter:

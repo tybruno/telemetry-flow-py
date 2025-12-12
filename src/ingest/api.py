@@ -16,7 +16,7 @@ Example:
         uvicorn.run(app, host="0.0.0.0", port=8000)
 """
 
-import logging
+import logging as _log
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -30,8 +30,6 @@ from src.ingest.exceptions import (
 )
 from src.ingest.models import HealthResponse, IngestRequest, IngestResponse
 from src.ingest.service import IngestService
-
-_log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["telemetry"])
 

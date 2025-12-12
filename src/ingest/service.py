@@ -18,15 +18,13 @@ Example:
         response = await service.ingest_telemetry(request)
 """
 
-import logging
+import logging as _log
 from datetime import datetime, timezone
 
 from src.core.models import TelemetryEvent
 from src.core.protocols import StreamProtocol
 from src.ingest.exceptions import InvalidPayloadError, StreamPublishError
 from src.ingest.models import IngestRequest, IngestResponse
-
-_log = logging.getLogger(__name__)
 
 
 class IngestService:

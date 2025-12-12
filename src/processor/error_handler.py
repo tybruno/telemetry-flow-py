@@ -4,7 +4,7 @@ Class:
     ConsumerErrorHandler: Handles errors and retries for message processing.
 """
 
-import logging
+import logging as _log
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
 from typing import Any, TypeVar
@@ -14,8 +14,6 @@ from src.processor.exceptions import (
     MaxRetriesExceededError,
     ProcessorError,
 )
-
-_log = logging.getLogger(__name__)
 
 T = TypeVar("T")
 

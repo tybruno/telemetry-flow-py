@@ -4,14 +4,12 @@ Class:
     TumblingWindowAggregator: Tumbling window aggregation.
 """
 
-import logging
+import logging as _log
 from datetime import timedelta
 
 from src.core.models import TelemetryEvent
 from src.processor.base_aggregator import BaseAggregator
 from src.processor.models import AggregatedMetric, WindowState
-
-_log = logging.getLogger(__name__)
 
 
 class TumblingWindowAggregator(BaseAggregator):

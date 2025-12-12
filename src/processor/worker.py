@@ -1,17 +1,15 @@
 """Telemetry processor worker orchestration.
 
 Class:
-    TelemetryWorker: Main worker for processing telemetry streams.
+    TelemetryWorker: Main processor worker orchestrating the pipeline.
 """
 
-import logging
+import logging as _log
 
 from src.core.protocols import AlerterProtocol, StorageProtocol
 from src.processor.aggregator import TumblingWindowAggregator
 from src.processor.consumer import TelemetryConsumer
 from src.processor.detector import ThresholdDetector
-
-_log = logging.getLogger(__name__)
 
 
 class TelemetryWorker:

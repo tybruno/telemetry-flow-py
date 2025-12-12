@@ -3,9 +3,7 @@
 Main entry point for running telemetry processor workers.
 """
 
-import logging
-
-_log = logging.getLogger(__name__)
+import logging as _log
 
 
 async def run_worker() -> None:

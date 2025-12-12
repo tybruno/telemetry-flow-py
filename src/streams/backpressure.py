@@ -4,9 +4,7 @@ Class:
     BackpressureManager: Manages stream backpressure.
 """
 
-import logging
-
-_log = logging.getLogger(__name__)
+import logging as _log
 
 
 class BackpressureManager:
