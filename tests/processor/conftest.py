@@ -1,4 +1,5 @@
 """Processor service test fixtures."""
+
 import pytest
 
 

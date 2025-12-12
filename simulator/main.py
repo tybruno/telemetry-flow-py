@@ -2,6 +2,7 @@
 
 Simulates network devices sending telemetry data to ingest service.
 """
+
 import logging
 
 _log = logging.getLogger(__name__)

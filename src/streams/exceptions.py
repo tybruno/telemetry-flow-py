@@ -5,6 +5,7 @@ Classes:
     ConsumerGroupError: Consumer group operation failures.
     BackpressureError: Backpressure threshold exceeded.
 """
+
 from src.core.exceptions import TelemetryError
 
 

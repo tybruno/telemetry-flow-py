@@ -5,6 +5,7 @@ Classes:
     AggregatedMetric: Result of time-window aggregation.
     AnomalyResult: Detected anomaly information.
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -12,7 +13,7 @@ from datetime import datetime
 @dataclass(frozen=True, slots=True, kw_only=True)
 class WindowState:
     """Aggregation window state for tracking metrics over time.
-    
+
     Attributes:
         device_id: Device identifier.
         metric_name: Metric being aggregated.
@@ -23,6 +24,7 @@ class WindowState:
         min_value: Minimum value in window.
         max_value: Maximum value in window.
     """
+
     device_id: str
     metric_name: str
     window_start: datetime
@@ -36,7 +38,7 @@ class WindowState:
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AggregatedMetric:
     """Result of time-window aggregation.
-    
+
     Attributes:
         device_id: Device identifier.
         metric_name: Metric name.
@@ -47,6 +49,7 @@ class AggregatedMetric:
         window_end: Window end timestamp.
         sample_count: Number of samples aggregated.
     """
+
     device_id: str
     metric_name: str
     avg_value: float
@@ -60,7 +63,7 @@ class AggregatedMetric:
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AnomalyResult:
     """Detected anomaly information.
-    
+
     Attributes:
         device_id: Device where anomaly detected.
         metric_name: Metric that triggered anomaly.
@@ -69,6 +72,7 @@ class AnomalyResult:
         severity: Anomaly severity level.
         detected_at: Timestamp of detection.
     """
+
     device_id: str
     metric_name: str
     actual_value: float

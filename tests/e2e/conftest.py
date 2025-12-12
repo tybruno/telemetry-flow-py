@@ -1,4 +1,5 @@
 """End-to-end test fixtures."""
+
 import pytest
 
 

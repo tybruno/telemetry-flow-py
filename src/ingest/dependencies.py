@@ -9,7 +9,7 @@ Functions:
 
 Example:
     Using dependencies in endpoints::
-    
+
         @router.post("/telemetry")
         async def ingest(
             request: IngestRequest,
@@ -17,6 +17,7 @@ Example:
         ):
             return await service.ingest_telemetry(request)
 """
+
 import logging
 
 from src.core.protocols import StreamProtocol
@@ -30,19 +31,19 @@ _service_instance: IngestService | None = None
 
 def get_stream() -> StreamProtocol:
     """Get stream protocol implementation.
-    
+
     Returns the configured stream implementation (Redis Streams).
     This is typically called during application startup.
-    
+
     Returns:
         StreamProtocol implementation instance.
-    
+
     Raises:
         RuntimeError: If stream is not initialized.
-    
+
     Example:
         Getting stream in main::
-        
+
             stream = get_stream()
     """
     raise NotImplementedError
@@ -50,19 +51,19 @@ def get_stream() -> StreamProtocol:
 
 def get_ingest_service() -> IngestService:
     """Get ingest service instance (FastAPI dependency).
-    
+
     Returns the singleton ingest service instance. Used as a
     FastAPI dependency for endpoint injection.
-    
+
     Returns:
         IngestService instance.
-    
+
     Raises:
         RuntimeError: If service not initialized.
-    
+
     Example:
         Using in endpoint::
-        
+
             @router.post("/telemetry")
             async def ingest_endpoint(
                 service: IngestService = Depends(get_ingest_service)
@@ -74,18 +75,18 @@ def get_ingest_service() -> IngestService:
 
 def initialize_service(stream: StreamProtocol) -> None:
     """Initialize the ingest service with dependencies.
-    
+
     Called during application startup to wire up dependencies
     and create the service instance.
-    
+
     Args:
         stream: Stream protocol implementation.
-    
+
     Example:
         Application startup::
-        
+
             from src.streams.redis_stream import RedisStream
-            
+
             stream = RedisStream(url="redis://localhost")
             initialize_service(stream=stream)
     """

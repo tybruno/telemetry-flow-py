@@ -1,4 +1,5 @@
 """Alert infrastructure test fixtures."""
+
 import pytest
 
 

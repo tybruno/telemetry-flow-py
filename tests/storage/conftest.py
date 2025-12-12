@@ -1,4 +1,5 @@
 """Storage infrastructure test fixtures."""
+
 import pytest
 
 

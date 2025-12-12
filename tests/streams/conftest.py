@@ -1,4 +1,5 @@
 """Stream infrastructure test fixtures."""
+
 import pytest
 
 

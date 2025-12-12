@@ -1,4 +1,5 @@
 """Simulator test fixtures."""
+
 import pytest
 
 

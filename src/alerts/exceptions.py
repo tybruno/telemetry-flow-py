@@ -4,6 +4,7 @@ Classes:
     AlertError: Base alert exception.
     AlertDeliveryError: Alert delivery failures.
 """
+
 from src.core.exceptions import TelemetryError
 
 

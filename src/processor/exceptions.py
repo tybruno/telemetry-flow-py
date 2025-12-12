@@ -6,6 +6,7 @@ Classes:
     StateRecoveryError: State recovery failures.
     ConsumerError: Stream consumption errors.
 """
+
 from src.core.exceptions import TelemetryError
 
 

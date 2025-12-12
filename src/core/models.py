@@ -19,6 +19,7 @@ Example:
             timestamp=datetime.now(timezone.utc)
         )
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -26,21 +27,21 @@ from datetime import datetime
 @dataclass(frozen=True, slots=True, kw_only=True)
 class TelemetryEvent:
     """Universal telemetry event shared across all services.
-    
+
     This is the core domain model that represents a single telemetry
     measurement from a network device. All services use this model
     to ensure consistent data representation.
-    
+
     Attributes:
         device_id: Unique identifier for the network device.
         interface: Network interface name (e.g., "eth0", "GigabitEthernet0/0").
         metric_name: Name of the metric being measured.
         metric_value: Numerical value of the metric.
         timestamp: UTC timestamp when the metric was captured.
-    
+
     Example:
         Creating a telemetry event::
-        
+
             event = TelemetryEvent(
                 device_id="switch-01",
                 interface="port-24",
@@ -49,6 +50,7 @@ class TelemetryEvent:
                 timestamp=datetime.now(timezone.utc)
             )
     """
+
     device_id: str
     interface: str
     metric_name: str

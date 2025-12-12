@@ -1,4 +1,5 @@
 """Ingest service test fixtures."""
+
 import pytest
 
 

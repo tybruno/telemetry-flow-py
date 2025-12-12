@@ -10,9 +10,10 @@ Functions:
 
 Example:
     Running the service::
-    
+
         python -m src.ingest.main
 """
+
 import logging
 
 from fastapi import FastAPI
@@ -24,16 +25,16 @@ _log = logging.getLogger(__name__)
 
 def create_app() -> FastAPI:
     """Create and configure FastAPI application.
-    
+
     Initializes the FastAPI application, registers routers,
     and configures middleware and dependencies.
-    
+
     Returns:
         Configured FastAPI application instance.
-    
+
     Example:
         Creating app for testing::
-        
+
             app = create_app()
             client = TestClient(app)
     """
@@ -42,13 +43,13 @@ def create_app() -> FastAPI:
 
 async def startup_event() -> None:
     """Application startup event handler.
-    
+
     Initializes dependencies (Redis connection, services) when
     the application starts.
-    
+
     Example:
         Registered on app::
-        
+
             app = FastAPI()
             app.add_event_handler("startup", startup_event)
     """
@@ -57,13 +58,13 @@ async def startup_event() -> None:
 
 async def shutdown_event() -> None:
     """Application shutdown event handler.
-    
+
     Cleanly shuts down connections and resources when
     the application stops.
-    
+
     Example:
         Registered on app::
-        
+
             app = FastAPI()
             app.add_event_handler("shutdown", shutdown_event)
     """
@@ -72,13 +73,13 @@ async def shutdown_event() -> None:
 
 def main() -> None:
     """Main entry point for the ingest service.
-    
+
     Loads configuration, creates the FastAPI app, and starts
     the uvicorn server.
-    
+
     Example:
         Running the service::
-        
+
             python -m src.ingest.main
     """
     raise NotImplementedError
