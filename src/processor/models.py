@@ -1,84 +1,76 @@
-"""Processor service-specific data models.
+"""Processor service-specific telemetry models.
+
+This module contains telemetry-specific models used only by the processor
+service for orchestrating telemetry event processing. Generic aggregation
+and detection models are in their respective libraries.
 
 Classes:
-    WindowState: Aggregation window state.
-    AggregatedMetric: Result of time-window aggregation.
-    AnomalyResult: Detected anomaly information.
+    TelemetryWindowKey: Unique identifier for telemetry aggregation windows
+    TelemetryMetricIdentifier: Identifies specific telemetry metrics
+
+Example:
+    Creating a window key::
+    
+        key = TelemetryWindowKey(
+            device_id="router-01",
+            interface="GigabitEthernet0/1",
+            metric_name="cpu_utilization"
+        )
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from typing import Optional
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class WindowState:
-    """Aggregation window state for tracking metrics over time.
-
+class TelemetryWindowKey:
+    """Unique identifier for telemetry aggregation windows.
+    
+    Combines device, interface, and metric to create a unique key for
+    tracking separate aggregation windows for each telemetry metric stream.
+    
     Attributes:
-        device_id: Device identifier.
-        metric_name: Metric being aggregated.
-        window_start: Window start timestamp.
-        window_end: Window end timestamp.
-        metric_sum: Sum of metric values in window.
-        metric_count: Number of events in window.
-        min_value: Minimum value in window.
-        max_value: Maximum value in window.
+        device_id: Unique device identifier (e.g., "router-01")
+        interface: Network interface identifier (e.g., "GigabitEthernet0/1")
+        metric_name: Name of the metric being tracked (e.g., "cpu_utilization")
+    
+    Example:
+        key = TelemetryWindowKey(
+            device_id="router-01",
+            interface="GigabitEthernet0/1",
+            metric_name="bandwidth_utilization"
+        )
+        
+        # Use as dictionary key
+        windows[key] = window_state
     """
-
     device_id: str
+    interface: str
     metric_name: str
-    window_start: datetime
-    window_end: datetime
-    metric_sum: float
-    metric_count: int
-    min_value: float
-    max_value: float
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class AggregatedMetric:
-    """Result of time-window aggregation.
-
+class TelemetryMetricIdentifier:
+    """Identifies a specific telemetry metric.
+    
+    Lightweight identifier for telemetry metrics used in configuration
+    and threshold management.
+    
     Attributes:
-        device_id: Device identifier.
-        metric_name: Metric name.
-        avg_value: Average value over window.
-        min_value: Minimum value in window.
-        max_value: Maximum value in window.
-        window_start: Window start timestamp.
-        window_end: Window end timestamp.
-        sample_count: Number of samples aggregated.
+        metric_name: Name of the metric (e.g., "cpu_utilization")
+        metric_type: Type/category of metric (e.g., "utilization", "counter")
+        unit: Unit of measurement (e.g., "percent", "bps")
+    
+    Example:
+        identifier = TelemetryMetricIdentifier(
+            metric_name="cpu_utilization",
+            metric_type="utilization",
+            unit="percent"
+        )
     """
-
-    device_id: str
     metric_name: str
-    avg_value: float
-    min_value: float
-    max_value: float
-    window_start: datetime
-    window_end: datetime
-    sample_count: int
+    metric_type: str
+    unit: Optional[str] = None
 
 
-@dataclass(frozen=True, slots=True, kw_only=True)
-class AnomalyResult:
-    """Detected anomaly information.
-
-    Attributes:
-        device_id: Device where anomaly detected.
-        metric_name: Metric that triggered anomaly.
-        actual_value: Actual metric value.
-        threshold: Threshold that was exceeded.
-        severity: Anomaly severity level.
-        detected_at: Timestamp of detection.
-    """
-
-    device_id: str
-    metric_name: str
-    actual_value: float
-    threshold: float
-    severity: str
-    detected_at: datetime
-
-
-__all__ = ["WindowState", "AggregatedMetric", "AnomalyResult"]
+__all__ = ["TelemetryWindowKey", "TelemetryMetricIdentifier"]
