@@ -488,6 +488,107 @@ All `Any` type usages reviewed and justified:
 
 **Commit:** b9af5c9
 
+---
+
+## Interaction 15: Architecture Documentation and Entry Point Enhancement
+**Tool:** GitHub Copilot (Claude Sonnet 4.5)
+**Mode:** Chat
+**Instructions File:** `.github/copilot-instructions.md`
+**Purpose:** Create comprehensive architecture documentation explaining package organization, communication patterns, and entry points
+
+### Prompt
+```
+I think you need to break down a little bit more about the organization of things here. Like, what are these different packages are and how they communicate with each other? What are they for? And also, what does the user use for those? If there's something we run in the main, we should probably use Dunder main as well, where it's applicable.
+```
+
+### AI Response
+Created comprehensive architecture documentation and enhanced all entry point files with detailed documentation.
+
+**New Documentation:**
+
+1. **ARCHITECTURE.md** (826 lines):
+   - Complete system overview with ASCII diagrams
+   - Detailed package organization:
+     * Core: Shared protocols and domain models
+     * Ingest Service: HTTP API for telemetry ingestion
+     * Processor Workers: Event processing and anomaly detection
+     * Streams Infrastructure: Redis Streams implementation
+     * Storage Infrastructure: Redis key-value storage
+     * Alerts Infrastructure: Alert delivery system
+     * Simulator: Device simulation for testing
+   - Communication patterns and data flow
+   - Protocol-driven architecture explanation
+   - Entry points and running instructions
+   - Configuration reference for all services
+   - Deployment architecture (single node, multi-node)
+   - Extensibility patterns
+   - Monitoring and observability guide
+
+**Entry Point Enhancements:**
+
+2. **src/ingest/main.py**:
+   - Enhanced module docstring with architecture context
+   - Communication patterns (Input: HTTP POST, Output: Redis Streams)
+   - Detailed `main()` function documentation with configuration
+   - Already had `if __name__ == "__main__":` block
+
+3. **src/processor/main.py**:
+   - Enhanced module docstring with architecture context
+   - Processing pipeline explanation (7 steps)
+   - Component initialization details
+   - Configuration reference
+   - Already had `if __name__ == "__main__":` block
+
+4. **simulator/main.py**:
+   - Enhanced module docstring with simulation details
+   - Metrics simulated (packet_loss_rate, latency_ms, etc.)
+   - Device and interface configuration
+   - Anomaly injection strategy
+   - Already had `if __name__ == "__main__":` block
+
+**Documentation Updates:**
+
+5. **README.md**:
+   - Added architecture diagram
+   - Component descriptions with entry points
+   - Entry points summary table
+   - Quick start for Docker Compose and manual setup
+   - Configuration reference for all services
+   - Testing instructions
+   - Monitoring guide
+   - Project structure overview
+   - Extensibility examples
+
+6. **DESIGN.md**:
+   - Added reference to ARCHITECTURE.md
+   - Enhanced package organization section
+   - Cross-linked documentation
+
+**Key Findings:**
+- ✅ All three main entry points already had `if __name__ == "__main__":` blocks
+- ✅ All entry points can be run via `python -m <module>` pattern
+- ✅ Documentation now clearly explains package responsibilities and communication
+
+**Entry Points Summary:**
+
+| Component | File | Command | Purpose |
+|-----------|------|---------|---------|
+| Ingest Service | `src/ingest/main.py` | `python -m src.ingest.main` | HTTP API for telemetry ingestion |
+| Processor Worker | `src/processor/main.py` | `python -m src.processor.main` | Event processing & anomaly detection |
+| Simulator | `simulator/main.py` | `python -m simulator.main` | Generate test telemetry data |
+
+**Files Created:**
+- `ARCHITECTURE.md` - Comprehensive system architecture guide (826 lines)
+
+**Files Modified:**
+- `DESIGN.md` - Added cross-references to architecture documentation
+- `README.md` - Completely restructured with architecture overview, entry points, configuration
+- `src/ingest/main.py` - Enhanced docstrings with architecture context
+- `src/processor/main.py` - Enhanced docstrings with processing pipeline details
+- `simulator/main.py` - Enhanced docstrings with simulation strategy
+
+**Commit:** 6c2c831
+
 
 
 
