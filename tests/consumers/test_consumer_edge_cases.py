@@ -220,7 +220,8 @@ class TestTelemetryConsumerSetup:
     async def test_setup_consumer_group_failure(self) -> None:
         """Test _setup_consumer_group raises ConsumerError on failure."""
         mock_stream = AsyncMock()
-        mock_stream.create_consumer_group = AsyncMock(side_effect=Exception("Stream error"))
+        error_msg = "Stream error"
+        mock_stream.create_consumer_group = AsyncMock(side_effect=Exception(error_msg))
         deserializer = MessageDeserializer()
         error_handler = ConsumerErrorHandler(max_retries=3)
         backpressure = BackpressureManager(max_rate=100)
@@ -291,8 +292,6 @@ class TestTelemetryConsumerBackpressure:
 
         mock_backpressure.should_throttle.assert_called_once()
         mock_backpressure.wait.assert_not_called()
-
-
 
 
 __all__ = [

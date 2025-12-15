@@ -74,34 +74,6 @@ docker-compose logs -f processor
 docker-compose down
 ```
 
-### Local Development
-
-```bash
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install core dependencies
-pip install -e .
-
-# Install with development dependencies
-pip install -e ".[dev]"
-
-# Or use Makefile
-make install-dev
-
-# Run tests with coverage
-make test-cov
-
-# Run linting and type checking
-make check
-
-# Auto-fix linting issues
-make fix
-```
-
----
-
 ## Core Features
 
 ### ✅ Core Requirements
@@ -305,9 +277,6 @@ For detailed testing information including Docker setup, test organization, runn
 
 ## Development
 
-For comprehensive development guidance including code quality standards, testing requirements, adding new features, and publishing to PyPI:
-
-**See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete development guide.**
 
 ### Quick Reference
 

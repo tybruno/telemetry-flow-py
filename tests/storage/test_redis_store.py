@@ -1,6 +1,6 @@
 """Tests for Redis Store implementation."""
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 

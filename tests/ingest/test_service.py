@@ -1,9 +1,8 @@
 """Tests for Ingest Service implementation."""
 
 import logging
-import math
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -129,7 +128,7 @@ class TestIngestServiceHealth:
         """Test health check returns False when stream is None."""
         partitioner = StreamPartitioner(num_partitions=3)
         service = IngestService(stream=AsyncMock(), partitioner=partitioner)
-        
+
         # Override stream to None
         service._stream = None
 

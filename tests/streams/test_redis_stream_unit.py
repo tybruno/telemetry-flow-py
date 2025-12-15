@@ -39,7 +39,9 @@ class TestRedisStreamPublish:
         stream._client = AsyncMock()
         stream._client.xadd = AsyncMock(return_value="1234567890-0")
 
-        result = await stream.publish(stream="telemetry", data={"device_id": "device-01"})
+        result = await stream.publish(
+            stream="telemetry", data={"device_id": "device-01"}
+        )
 
         assert result == "1234567890-0"
         stream._client.xadd.assert_called_once()
@@ -114,7 +116,9 @@ class TestRedisStreamConsume:
 
         with pytest.raises(ValueError, match="Stream name cannot be empty"):
             # The validation happens when the async generator is created
-            async for _ in stream.consume(stream="", group="group", consumer_name="consumer"):
+            async for _ in stream.consume(
+                stream="", group="group", consumer_name="consumer"
+            ):
                 pass
 
     @pytest.mark.asyncio
@@ -123,7 +127,9 @@ class TestRedisStreamConsume:
         stream = RedisStream(url="redis://localhost:6379/0")
 
         with pytest.raises(ValueError, match="Group name cannot be empty"):
-            async for _ in stream.consume(stream="stream", group="", consumer_name="consumer"):
+            async for _ in stream.consume(
+                stream="stream", group="", consumer_name="consumer"
+            ):
                 pass
 
     @pytest.mark.asyncio
@@ -132,7 +138,9 @@ class TestRedisStreamConsume:
         stream = RedisStream(url="redis://localhost:6379/0")
 
         with pytest.raises(ValueError, match="Consumer name cannot be empty"):
-            async for _ in stream.consume(stream="stream", group="group", consumer_name=""):
+            async for _ in stream.consume(
+                stream="stream", group="group", consumer_name=""
+            ):
                 pass
 
 
@@ -146,7 +154,11 @@ class TestRedisStreamAcknowledge:
         stream._client = AsyncMock()
         stream._client.xack = AsyncMock(return_value=1)
 
-        await stream.acknowledge(stream="telemetry", group="processors", message_id="1234567890-0")
+        await stream.acknowledge(
+            stream="telemetry",
+            group="processors",
+            message_id="1234567890-0",
+        )
 
         stream._client.xack.assert_called_once()
 
@@ -172,7 +184,9 @@ class TestRedisStreamAcknowledge:
         stream = RedisStream(url="redis://localhost:6379/0")
 
         with pytest.raises(ValueError, match="Message ID cannot be empty"):
-            await stream.acknowledge(stream="telemetry", group="processors", message_id="")
+            await stream.acknowledge(
+                stream="telemetry", group="processors", message_id=""
+            )
 
     @pytest.mark.asyncio
     async def test_acknowledge_redis_error_raises(self) -> None:
@@ -182,7 +196,9 @@ class TestRedisStreamAcknowledge:
         stream._client.xack = AsyncMock(side_effect=Exception("Redis error"))
 
         with pytest.raises(StreamError, match="Failed to acknowledge"):
-            await stream.acknowledge(stream="telemetry", group="processors", message_id="123")
+            await stream.acknowledge(
+                stream="telemetry", group="processors", message_id="123"
+            )
 
 
 class TestRedisStreamPublishWithTypes:
@@ -195,7 +211,9 @@ class TestRedisStreamPublishWithTypes:
         stream._client = AsyncMock()
         stream._client.xadd = AsyncMock(return_value="1234567890-0")
 
-        result = await stream.publish(stream="metrics", data={"value": 42, "ratio": 3.14})
+        result = await stream.publish(
+            stream="metrics", data={"value": 42, "ratio": 3.14}
+        )
 
         assert result == "1234567890-0"
         stream._client.xadd.assert_called_once()
@@ -217,7 +235,9 @@ class TestRedisStreamCreateGroupWithExisting:
         stream = RedisStream(url="redis://localhost:6379/0")
         stream._client = AsyncMock()
         # Simulate BUSYGROUP error (group already exists)
-        error = redis.asyncio.ResponseError("BUSYGROUP Consumer Group name already exists")
+        error = redis.asyncio.ResponseError(
+            "BUSYGROUP Consumer Group name already exists"
+        )
         stream._client.xgroup_create = AsyncMock(side_effect=error)
 
         # Should not raise - idempotent behavior
@@ -244,7 +264,8 @@ class TestRedisStreamCreateGroupWithExisting:
         """Test create_consumer_group with generic exception."""
         stream = RedisStream(url="redis://localhost:6379/0")
         stream._client = AsyncMock()
-        stream._client.xgroup_create = AsyncMock(side_effect=Exception("Connection failed"))
+        error_msg = "Connection failed"
+        stream._client.xgroup_create = AsyncMock(side_effect=Exception(error_msg))
 
         with pytest.raises(StreamError, match="Failed to create consumer group"):
             await stream.create_consumer_group(stream="telemetry", group="processors")
@@ -256,14 +277,21 @@ class TestRedisStreamConsumeWithMocks:
     @pytest.mark.asyncio
     async def test_consume_returns_messages(self) -> None:
         """Test consume successfully yields messages."""
-        import redis.asyncio
 
         stream = RedisStream(url="redis://localhost:6379/0")
         stream._client = AsyncMock()
 
         # Mock xreadgroup to return one message
         mock_result = [
-            ("telemetry", [("1234567890-0", {"device_id": "device-01", "value": "95.5"})])
+            (
+                "telemetry",
+                [
+                    (
+                        "1234567890-0",
+                        {"device_id": "device-01", "value": "95.5"},
+                    )
+                ],
+            )
         ]
         stream._client.xreadgroup = AsyncMock(side_effect=[mock_result, None])
 
@@ -286,10 +314,10 @@ class TestRedisStreamConsumeWithMocks:
         stream._client = AsyncMock()
 
         # Return None twice, then a result
-        mock_result = [
-            ("telemetry", [("1234567890-0", {"device_id": "device-01"})])
-        ]
-        stream._client.xreadgroup = AsyncMock(side_effect=[None, None, mock_result, None])
+        mock_result = [("telemetry", [("1234567890-0", {"device_id": "device-01"})])]
+        stream._client.xreadgroup = AsyncMock(
+            side_effect=[None, None, mock_result, None]
+        )
 
         consumed_messages = []
         call_count = 0
@@ -309,6 +337,7 @@ class TestRedisStreamConsumeWithMocks:
     async def test_consume_with_nogroup_error(self) -> None:
         """Test consume raises ConsumerGroupError when group doesn't exist."""
         import redis.asyncio
+
         from src.streams.exceptions import ConsumerGroupError
 
         stream = RedisStream(url="redis://localhost:6379/0")

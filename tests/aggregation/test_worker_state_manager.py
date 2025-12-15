@@ -304,4 +304,10 @@ class TestWorkerStateManagerIntegration:
         assert state_v2 == {"version": 2}
 
 
-__all__ = ["TestWorkerStateManagerInitialization", "TestWorkerStateManagerSaveState", "TestWorkerStateManagerLoadState", "TestWorkerStateManagerGenerateStateKey", "TestWorkerStateManagerIntegration"]
+__all__ = [
+    "TestWorkerStateManagerInitialization",
+    "TestWorkerStateManagerSaveState",
+    "TestWorkerStateManagerLoadState",
+    "TestWorkerStateManagerGenerateStateKey",
+    "TestWorkerStateManagerIntegration",
+]

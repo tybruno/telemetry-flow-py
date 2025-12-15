@@ -16,7 +16,6 @@ class TestAccumulateEventTypeErrors:
         aggregator = TumblingWindowAggregator(window_size=60)
 
         # Create a window with invalid values type
-        window_key = ("device-01", "eth0", "bandwidth")
         window = {
             "values": "not_a_list",  # Should be list
             "sum": 0.0,
@@ -42,7 +41,6 @@ class TestAccumulateEventTypeErrors:
         """Test accumulate raises TypeError when sum is not numeric."""
         aggregator = TumblingWindowAggregator(window_size=60)
 
-        window_key = ("device-01", "eth0", "bandwidth")
         window = {
             "values": [],
             "sum": "not_numeric",  # Should be int or float
@@ -68,7 +66,6 @@ class TestAccumulateEventTypeErrors:
         """Test accumulate raises TypeError when count is not int."""
         aggregator = TumblingWindowAggregator(window_size=60)
 
-        window_key = ("device-01", "eth0", "bandwidth")
         window = {
             "values": [],
             "sum": 0.0,
@@ -94,7 +91,6 @@ class TestAccumulateEventTypeErrors:
         """Test accumulate raises TypeError when min is not numeric."""
         aggregator = TumblingWindowAggregator(window_size=60)
 
-        window_key = ("device-01", "eth0", "bandwidth")
         window = {
             "values": [],
             "sum": 0.0,
@@ -120,7 +116,6 @@ class TestAccumulateEventTypeErrors:
         """Test accumulate raises TypeError when max is not numeric."""
         aggregator = TumblingWindowAggregator(window_size=60)
 
-        window_key = ("device-01", "eth0", "bandwidth")
         window = {
             "values": [],
             "sum": 0.0,
@@ -191,6 +186,8 @@ class TestCreateWindowBoundsTypeErrors:
             aggregator._create_window_bounds(window, ("device-01", "eth0", "bandwidth"))
 
 
-__all__ = ["TestAccumulateEventTypeErrors", "TestExtractWindowValuesTypeErrors", "TestCreateWindowBoundsTypeErrors"]
-
-
+__all__ = [
+    "TestAccumulateEventTypeErrors",
+    "TestExtractWindowValuesTypeErrors",
+    "TestCreateWindowBoundsTypeErrors",
+]

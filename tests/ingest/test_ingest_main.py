@@ -12,7 +12,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
 # Import the module directly using importlib to avoid naming collision
 ingest_main = importlib.import_module("src.ingest.main")
@@ -48,7 +47,8 @@ class TestCreateApp:
 
             # Check middleware is present
             has_cors = any(
-                "CORSMiddleware" in str(middleware) for middleware in app.user_middleware
+                "CORSMiddleware" in str(middleware)
+                for middleware in app.user_middleware
             )
             assert has_cors
 
@@ -61,9 +61,7 @@ class TestCreateApp:
             assert app.docs_url == "/docs"
             assert app.redoc_url == "/redoc"
 
-    def test_create_app_logs_info(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_create_app_logs_info(self, caplog: pytest.LogCaptureFixture) -> None:
         """Test create_app logs application creation."""
         mock_router = MagicMock()
         with patch.object(ingest_main, "router", mock_router):
@@ -85,10 +83,10 @@ class TestLifespan:
         mock_stream = MagicMock()
         mock_stream.close = AsyncMock()
         mock_stream_class = MagicMock(return_value=mock_stream)
-        
+
         mock_partitioner = MagicMock()
         mock_partitioner_class = MagicMock(return_value=mock_partitioner)
-        
+
         mock_init_service = MagicMock()
 
         with patch.object(ingest_main, "RedisStream", mock_stream_class):
@@ -115,7 +113,7 @@ class TestLifespan:
 
         mock_partitioner = MagicMock()
         mock_partitioner_class = MagicMock(return_value=mock_partitioner)
-        
+
         mock_init_service = MagicMock()
 
         with patch.object(ingest_main, "RedisStream", mock_stream_class):
@@ -142,7 +140,7 @@ class TestLifespan:
 
         mock_partitioner = MagicMock()
         mock_partitioner_class = MagicMock(return_value=mock_partitioner)
-        
+
         mock_init_service = MagicMock()
 
         with patch.object(ingest_main, "RedisStream", mock_stream_class):
@@ -168,7 +166,7 @@ class TestLifespan:
         mock_stream = MagicMock()
         mock_stream.close = AsyncMock()
         mock_stream_class = MagicMock(return_value=mock_stream)
-        
+
         mock_partitioner_class = MagicMock()
         mock_init_service = MagicMock()
 
@@ -193,7 +191,7 @@ class TestLifespan:
         mock_stream = MagicMock()
         mock_stream.close = AsyncMock(side_effect=Exception("Connection error"))
         mock_stream_class = MagicMock(return_value=mock_stream)
-        
+
         mock_partitioner_class = MagicMock()
         mock_init_service = MagicMock()
 
@@ -219,7 +217,7 @@ class TestLifespan:
         mock_stream = MagicMock()
         mock_stream.close = AsyncMock()
         mock_stream_class = MagicMock(return_value=mock_stream)
-        
+
         mock_partitioner_class = MagicMock()
         mock_init_service = MagicMock()
 
@@ -244,7 +242,7 @@ class TestLifespan:
         mock_stream = MagicMock()
         mock_stream.close = AsyncMock()
         mock_stream_class = MagicMock(return_value=mock_stream)
-        
+
         mock_partitioner_class = MagicMock()
         mock_init_service = MagicMock()
 
@@ -311,7 +309,8 @@ class TestMain:
         self,
     ) -> None:
         """Test main returns 2 on ConnectionError."""
-        mock_uvicorn_run = MagicMock(side_effect=ConnectionError("Cannot connect to Redis"))
+        error_msg = "Cannot connect to Redis"
+        mock_uvicorn_run = MagicMock(side_effect=ConnectionError(error_msg))
         mock_create_app = MagicMock()
 
         with patch.object(ingest_main.uvicorn, "run", mock_uvicorn_run):
