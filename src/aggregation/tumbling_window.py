@@ -377,9 +377,9 @@ class TumblingWindowAggregator(BaseAggregator):
             end=end,
             size_seconds=float(self._window_size)
         )
-        
+
         device_id, interface, metric_name = window_key
-        
+
         return bounds, device_id, interface, metric_name
 
     def _log_window_completion(

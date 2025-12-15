@@ -1,6 +1,7 @@
 """Extended tests for ProcessorConfig validation."""
 
 import pytest
+
 from src.processor.config import ProcessorConfig
 
 
@@ -14,7 +15,7 @@ class TestProcessorConfigValidation:
             consumer_group="test",
             redis_url="redis://localhost"
         )
-        
+
         with pytest.raises(ValueError, match="Invalid window_size_seconds"):
             config.validate_config()
 
@@ -25,7 +26,7 @@ class TestProcessorConfigValidation:
             consumer_group="test",
             redis_url="redis://localhost"
         )
-        
+
         with pytest.raises(ValueError, match="Invalid window_size_seconds"):
             config.validate_config()
 
@@ -37,7 +38,7 @@ class TestProcessorConfigValidation:
             redis_url="redis://localhost",
             max_retries=-1
         )
-        
+
         with pytest.raises(ValueError, match="Invalid max_retries"):
             config.validate_config()
 
@@ -49,7 +50,7 @@ class TestProcessorConfigValidation:
             redis_url="redis://localhost",
             default_threshold=-5.0
         )
-        
+
         with pytest.raises(ValueError, match="Invalid default_threshold"):
             config.validate_config()
 
@@ -63,7 +64,7 @@ class TestProcessorConfigValidation:
             redis_url="redis://localhost",
             partition_id=1
         )
-        
+
         with pytest.raises(
             ValueError,
             match="num_partitions required when partition_id is set"
@@ -79,7 +80,7 @@ class TestProcessorConfigValidation:
             partition_id=-1,
             num_partitions=4
         )
-        
+
         with pytest.raises(
             ValueError,
             match="Invalid partition_id"
@@ -97,7 +98,7 @@ class TestProcessorConfigValidation:
             partition_id=4,
             num_partitions=4
         )
-        
+
         with pytest.raises(
             ValueError,
             match="Invalid partition_id"
@@ -115,7 +116,7 @@ class TestProcessorConfigValidation:
             partition_id=10,
             num_partitions=4
         )
-        
+
         with pytest.raises(
             ValueError,
             match="Invalid partition_id"
@@ -130,7 +131,7 @@ class TestProcessorConfigValidation:
             redis_url="redis://localhost",
             metric_thresholds={"cpu_usage": -10.0}
         )
-        
+
         with pytest.raises(
             ValueError,
             match="Invalid threshold for cpu_usage"
@@ -149,7 +150,7 @@ class TestProcessorConfigValidation:
             num_partitions=4,
             metric_thresholds={"cpu_usage": 90.0}
         )
-        
+
         # Should not raise
         config.validate_config()
 
@@ -161,7 +162,7 @@ class TestProcessorConfigValidation:
             redis_url="redis://localhost",
             max_retries=0
         )
-        
+
         # Should not raise
         config.validate_config()
 
@@ -173,7 +174,7 @@ class TestProcessorConfigValidation:
             redis_url="redis://localhost",
             default_threshold=0.0
         )
-        
+
         # Should not raise
         config.validate_config()
 
@@ -189,9 +190,9 @@ class TestGetStreamName:
             redis_url="redis://localhost",
             stream_name="telemetry"
         )
-        
+
         stream_name = config.get_stream_name()
-        
+
         assert stream_name == "telemetry"
 
     def test_get_stream_name_with_partitioning(self) -> None:
@@ -204,9 +205,9 @@ class TestGetStreamName:
             partition_id=2,
             num_partitions=4
         )
-        
+
         stream_name = config.get_stream_name()
-        
+
         assert stream_name == "telemetry:2"
 
     def test_get_stream_name_with_partition_zero(self) -> None:
@@ -219,9 +220,9 @@ class TestGetStreamName:
             partition_id=0,
             num_partitions=4
         )
-        
+
         stream_name = config.get_stream_name()
-        
+
         assert stream_name == "telemetry:0"
 
 
@@ -240,9 +241,9 @@ class TestGetThreshold:
                 "memory_usage": 85.0
             }
         )
-        
+
         threshold = config.get_threshold("cpu_usage")
-        
+
         assert threshold == 90.0
 
     def test_get_threshold_returns_default_for_unknown_metric(self) -> None:
@@ -254,9 +255,9 @@ class TestGetThreshold:
             default_threshold=80.0,
             metric_thresholds={"cpu_usage": 90.0}
         )
-        
+
         threshold = config.get_threshold("network_throughput")
-        
+
         assert threshold == 80.0
 
     def test_get_threshold_returns_default_with_no_metric_thresholds(
@@ -269,7 +270,7 @@ class TestGetThreshold:
             redis_url="redis://localhost",
             default_threshold=75.0
         )
-        
+
         threshold = config.get_threshold("any_metric")
-        
+
         assert threshold == 75.0

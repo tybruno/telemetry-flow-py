@@ -13,7 +13,7 @@ class TestStateSnapshot:
     def test_state_snapshot_creation(self) -> None:
         """Test StateSnapshot can be created with all fields."""
         timestamp = datetime(2025, 12, 15, 10, 0, 0, tzinfo=timezone.utc)
-        
+
         snapshot = StateSnapshot(
             worker_id="worker-01",
             state_data={"last_offset": "1234567890-0", "windows": {}},

@@ -198,24 +198,7 @@ class TestThresholdDetector:
         sample_metric: WindowMetrics,
     ) -> None:
         """Test detect returns None when no anomaly detected.
-        
-        Args:
-            detector: ThresholdDetector fixture.
-            sample_metric: WindowMetrics fixture with value 75.0.
-        """
-        # sample_metric has average 75.0, threshold is 80.0
-        result = detector.detect(sample_metric)
-        assert result is None
-        assert severity == "low"
-        assert confidence == 0.75
 
-    def test_detect_returns_none_for_non_anomaly(
-        self,
-        detector: ThresholdDetector,
-        sample_metric: WindowMetrics,
-    ) -> None:
-        """Test detect returns None when no anomaly detected.
-        
         Args:
             detector: ThresholdDetector fixture.
             sample_metric: WindowMetrics fixture with value 75.0.

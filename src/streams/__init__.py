@@ -30,7 +30,6 @@ __all__ = [
     "StreamMessage",
     "StreamPartitioner",
 ]
-from src.streams.redis_stream import RedisStream
 
 __all__ = [
     "BackpressureError",

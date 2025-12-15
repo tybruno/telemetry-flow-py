@@ -1,8 +1,9 @@
 """End-to-end test fixtures."""
 
+from collections.abc import AsyncIterator
+
 import pytest
 from redis.asyncio import Redis
-from typing import AsyncIterator
 
 
 @pytest.fixture

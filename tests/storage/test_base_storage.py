@@ -64,7 +64,7 @@ class TestBaseStorageValidation:
             storage: ConcreteStorage fixture.
         """
         long_key = "x" * 1025
-        
+
         with pytest.raises(ValueError, match="Storage key too long"):
             await storage.store(long_key, "value")
 
@@ -78,7 +78,7 @@ class TestBaseStorageValidation:
             storage: ConcreteStorage fixture.
         """
         max_key = "x" * 1024
-        
+
         # Should not raise
         await storage.store(max_key, "value")
 

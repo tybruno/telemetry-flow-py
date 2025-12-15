@@ -4,11 +4,12 @@ Tests the StreamConsumer class including message consumption, acknowledgment,
 error handling, and backpressure management.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
-from src.consumers.consumer import TelemetryConsumer
+import pytest
+
 from src.consumers.backpressure import BackpressureManager
+from src.consumers.consumer import TelemetryConsumer
 from src.consumers.deserializer import MessageDeserializer
 from src.consumers.error_handler import ConsumerErrorHandler
 

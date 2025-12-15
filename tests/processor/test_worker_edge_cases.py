@@ -1,9 +1,10 @@
 """Additional tests for TelemetryWorker edge cases."""
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 
 from src.processor.worker import TelemetryWorker
-from unittest.mock import AsyncMock, MagicMock
 
 
 class TestTelemetryWorkerEdgeCases:
@@ -73,10 +74,10 @@ class TestTelemetryWorkerEdgeCases:
             storage=AsyncMock(),
             alerter=AsyncMock(),
         )
-        
+
         # Stop without starting
         await worker.stop()
-        
+
         # Should complete without error
         assert worker._running is False
 

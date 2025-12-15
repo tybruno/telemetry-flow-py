@@ -4,11 +4,15 @@ Tests the ConsumerErrorHandler class including retry logic, exponential
 backoff, and error classification.
 """
 
+
 import pytest
-from unittest.mock import AsyncMock
 
 from src.consumers.error_handler import ConsumerErrorHandler
-from src.consumers.exceptions import ConsumerError, DeserializationError, RetryExhaustedError
+from src.consumers.exceptions import (
+    ConsumerError,
+    DeserializationError,
+    RetryExhaustedError,
+)
 
 
 class TestConsumerErrorHandler:

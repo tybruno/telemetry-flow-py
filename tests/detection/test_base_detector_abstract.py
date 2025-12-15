@@ -1,10 +1,8 @@
 """Tests for BaseDetector abstract method."""
 
-from datetime import datetime, timezone
 
 import pytest
 
-from src.aggregation.models import WindowBounds, WindowMetrics
 from src.detection.base_detector import BaseDetector
 
 

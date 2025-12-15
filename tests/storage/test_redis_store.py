@@ -1,10 +1,9 @@
 """Tests for Redis Store implementation."""
 
-import pytest
 from unittest.mock import AsyncMock
-from datetime import timedelta
 
-from src.storage.exceptions import StorageError
+import pytest
+
 from src.storage.redis_store import RedisStore
 
 

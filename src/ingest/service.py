@@ -304,7 +304,7 @@ class IngestService:
                 base_name=self._base_stream_name,
                 device_id=event.device_id
             )
-            
+
             event_id = await self._stream.publish(
                 stream=stream_name,
                 data=self._serialize_event(event)

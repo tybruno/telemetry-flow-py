@@ -4,7 +4,7 @@ import asyncio
 import logging
 import os
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import httpx
 import pytest
@@ -33,13 +33,13 @@ class TestSendTelemetry:
         """
         mock_response = Mock()
         mock_response.raise_for_status = Mock()
-        
+
         with patch("httpx.AsyncClient") as mock_client:
             mock_instance = AsyncMock()
             mock_instance.post = AsyncMock(return_value=mock_response)
             mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_instance)
             mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
-            
+
             result = await send_telemetry(
                 ingest_url=mock_ingest_url,
                 device_id=sample_device_id,
@@ -47,7 +47,7 @@ class TestSendTelemetry:
                 metric_name="packet_loss_rate",
                 metric_value=0.05,
             )
-            
+
             send_successful = result is True
             assert send_successful
 
@@ -70,7 +70,7 @@ class TestSendTelemetry:
             )
             mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_instance)
             mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
-            
+
             result = await send_telemetry(
                 ingest_url=mock_ingest_url,
                 device_id=sample_device_id,
@@ -78,7 +78,7 @@ class TestSendTelemetry:
                 metric_name="packet_loss_rate",
                 metric_value=0.05,
             )
-            
+
             send_failed = result is False
             assert send_failed
 
@@ -94,10 +94,12 @@ class TestSendTelemetry:
         """
         with patch("httpx.AsyncClient") as mock_client:
             mock_instance = AsyncMock()
-            mock_instance.post = AsyncMock(side_effect=httpx.TimeoutException("timeout"))
+            mock_instance.post = AsyncMock(
+                side_effect=httpx.TimeoutException("timeout")
+            )
             mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_instance)
             mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
-            
+
             result = await send_telemetry(
                 ingest_url=mock_ingest_url,
                 device_id=sample_device_id,
@@ -105,7 +107,7 @@ class TestSendTelemetry:
                 metric_name="packet_loss_rate",
                 metric_value=0.05,
             )
-            
+
             send_failed = result is False
             assert send_failed
 
@@ -126,7 +128,7 @@ class TestSendTelemetry:
             )
             mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_instance)
             mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
-            
+
             result = await send_telemetry(
                 ingest_url=mock_ingest_url,
                 device_id=sample_device_id,
@@ -134,7 +136,7 @@ class TestSendTelemetry:
                 metric_name="packet_loss_rate",
                 metric_value=0.05,
             )
-            
+
             send_failed = result is False
             assert send_failed
 
@@ -167,14 +169,14 @@ class TestGenerateMetricValue:
             max_val: Maximum expected value.
         """
         value = generate_metric_value(metric_name, is_anomaly)
-        
+
         value_in_range = min_val <= value <= max_val
         assert value_in_range
 
     def test_generate_metric_value_unknown_metric(self) -> None:
         """Test metric value generation for unknown metric."""
         value = generate_metric_value("unknown_metric", False)
-        
+
         value_in_default_range = 0.0 <= value <= 100.0
         assert value_in_default_range
 
@@ -186,10 +188,10 @@ class TestGenerateMetricValue:
         anomaly_values = [
             generate_metric_value("packet_loss_rate", True) for _ in range(100)
         ]
-        
+
         avg_normal = sum(normal_values) / len(normal_values)
         avg_anomaly = sum(anomaly_values) / len(anomaly_values)
-        
+
         anomaly_significantly_higher = avg_anomaly > avg_normal * 2
         assert anomaly_significantly_higher
 
@@ -214,12 +216,12 @@ class TestSimulateDevice:
             mock_ingest_url: Mock ingest URL fixture.
         """
         call_count = 0
-        
+
         async def mock_send(*args: Any, **kwargs: Any) -> bool:
             nonlocal call_count
             call_count += 1
             return True
-        
+
         with patch("simulator.main.send_telemetry", side_effect=mock_send):
             with patch("asyncio.sleep", side_effect=asyncio.CancelledError):
                 try:
@@ -233,7 +235,7 @@ class TestSimulateDevice:
                     )
                 except asyncio.CancelledError:
                     pass
-        
+
         expected_calls = len(sample_interfaces) * len(sample_metrics)
         calls_correct = call_count == expected_calls
         assert calls_correct
@@ -256,7 +258,7 @@ class TestSimulateDevice:
         """
         async def mock_send(*args: Any, **kwargs: Any) -> bool:
             return True
-        
+
         with patch("simulator.main.send_telemetry", side_effect=mock_send):
             with patch("asyncio.sleep", side_effect=asyncio.CancelledError):
                 # Should exit cleanly without raising
@@ -268,7 +270,7 @@ class TestSimulateDevice:
                     interval_seconds=1.0,
                     anomaly_rate=0.0,
                 )
-                
+
                 # Test passes if we get here
                 cancelled_handled = True
                 assert cancelled_handled
@@ -290,22 +292,22 @@ class TestSimulateDevice:
             mock_ingest_url: Mock ingest URL fixture.
         """
         error_count = 0
-        
+
         async def mock_send_with_error(*args: Any, **kwargs: Any) -> bool:
             nonlocal error_count
             error_count += 1
             if error_count == 1:
                 raise RuntimeError("Test error")
             return True
-        
+
         sleep_count = 0
-        
+
         async def mock_sleep(seconds: float) -> None:
             nonlocal sleep_count
             sleep_count += 1
             if sleep_count >= 2:
                 raise asyncio.CancelledError
-        
+
         with patch("simulator.main.send_telemetry", side_effect=mock_send_with_error):
             with patch("asyncio.sleep", side_effect=mock_sleep):
                 try:
@@ -319,7 +321,7 @@ class TestSimulateDevice:
                     )
                 except asyncio.CancelledError:
                     pass
-        
+
         error_was_handled = sleep_count >= 2
         assert error_was_handled
 
@@ -332,14 +334,14 @@ class TestRunSimulator:
         """Test simulator creates tasks for devices."""
         async def mock_simulate(*args: Any, **kwargs: Any) -> None:
             await asyncio.sleep(0.01)
-        
+
         with patch("simulator.main.simulate_device", side_effect=mock_simulate):
             with patch("asyncio.gather", side_effect=KeyboardInterrupt):
                 try:
                     await run_simulator()
                 except KeyboardInterrupt:
                     pass
-        
+
         test_passed = True
         assert test_passed
 
@@ -357,7 +359,7 @@ class TestRunSimulator:
         ):
             # Mock simulate_device to track calls
             call_count = 0
-            
+
             async def mock_simulate_device(*args: Any, **kwargs: Any) -> None:
                 nonlocal call_count
                 call_count += 1
@@ -368,12 +370,12 @@ class TestRunSimulator:
                 task = asyncio.create_task(run_simulator())
                 await asyncio.sleep(0.05)  # Let it start
                 task.cancel()
-                
+
                 try:
                     await task
                 except asyncio.CancelledError:
                     pass  # Expected
-                
+
                 # Verify 3 devices were created
                 assert call_count == 3
 
@@ -382,14 +384,14 @@ class TestRunSimulator:
         """Test simulator handles keyboard interrupt."""
         async def mock_simulate(*args: Any, **kwargs: Any) -> None:
             await asyncio.sleep(0.01)
-        
+
         with patch("simulator.main.simulate_device", side_effect=mock_simulate):
             with patch("asyncio.gather", side_effect=KeyboardInterrupt):
                 try:
                     await run_simulator()
                 except KeyboardInterrupt:
                     pass
-                
+
                 simulator_handled_interrupt = True
                 assert simulator_handled_interrupt
 
@@ -401,10 +403,10 @@ class TestMain:
         """Test main function returns 0 on success."""
         async def mock_run() -> None:
             raise KeyboardInterrupt
-        
+
         with patch("simulator.main.run_simulator", side_effect=mock_run):
             exit_code = main()
-            
+
             exit_code_is_zero = exit_code == 0
             assert exit_code_is_zero
 
@@ -412,7 +414,7 @@ class TestMain:
         """Test main handles keyboard interrupt."""
         with patch("asyncio.run", side_effect=KeyboardInterrupt):
             exit_code = main()
-            
+
             exit_code_is_zero = exit_code == 0
             assert exit_code_is_zero
 
@@ -420,7 +422,7 @@ class TestMain:
         """Test main handles ValueError."""
         with patch("asyncio.run", side_effect=ValueError("test error")):
             exit_code = main()
-            
+
             exit_code_is_one = exit_code == 1
             assert exit_code_is_one
 
@@ -428,7 +430,7 @@ class TestMain:
         """Test main handles ConnectionError."""
         with patch("asyncio.run", side_effect=ConnectionError("test error")):
             exit_code = main()
-            
+
             exit_code_is_two = exit_code == 2
             assert exit_code_is_two
 
@@ -436,7 +438,7 @@ class TestMain:
         """Test main handles runtime errors."""
         with patch("asyncio.run", side_effect=RuntimeError("test error")):
             exit_code = main()
-            
+
             exit_code_is_three = exit_code == 3
             assert exit_code_is_three
 
@@ -446,7 +448,7 @@ class TestMain:
             with patch("asyncio.run", side_effect=KeyboardInterrupt):
                 with patch("logging.basicConfig") as mock_basicconfig:
                     main()
-                    
+
                     # Verify basicConfig was called with DEBUG level
                     called_with_debug = any(
                         call[1].get("level") == logging.DEBUG

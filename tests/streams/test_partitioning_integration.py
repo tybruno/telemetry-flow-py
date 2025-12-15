@@ -3,13 +3,14 @@
 Tests partition assignment, rebalancing, and message routing.
 """
 
+from datetime import datetime, timezone
+
 import pytest
 from redis.asyncio import Redis
 
-from src.streams.redis_stream import RedisStream
-from src.streams.partitioner import StreamPartitioner
 from src.core.models import TelemetryEvent
-from datetime import datetime, timezone
+from src.streams.partitioner import StreamPartitioner
+from src.streams.redis_stream import RedisStream
 
 
 @pytest.mark.integration
@@ -62,7 +63,7 @@ class TestStreamPartitioningIntegration:
     ) -> None:
         """Test same device_id always routes to same partition."""
         partitioner = StreamPartitioner(base_stream_name=test_stream_name, num_partitions=4)
-        
+
         device_id = "router-special-01"
         partitions = set()
 

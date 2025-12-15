@@ -8,7 +8,7 @@ from src.core.models import TelemetryEvent
 
 class ConcreteAggregator(BaseAggregator):
     """Concrete implementation for testing."""
-    
+
     async def aggregate(self, event: TelemetryEvent):
         """Test implementation."""
         return None
@@ -40,10 +40,10 @@ class TestBaseAggregator:
 
     async def test_aggregate_abstract_method(self) -> None:
         """Test aggregate is abstract in BaseAggregator."""
-        
+
         # Create instance that doesn't override aggregate
         aggregator = ConcreteAggregator(window_size_seconds=60)
-        
+
         # Verify aggregate method exists and is callable
         assert hasattr(aggregator, 'aggregate')
         assert callable(aggregator.aggregate)

@@ -107,7 +107,7 @@ async def run_worker() -> None:
         config.default_threshold,
         stream_name,
     )
-    
+
     if config.partition_id is not None:
         _log.info(
             "Partitioning enabled: partition_id=%d, num_partitions=%d",

@@ -11,28 +11,28 @@ class TestProcessorConfigValidation:
     def test_validate_config_negative_window_size_raises(self) -> None:
         """Test validate_config raises on negative window size."""
         config = ProcessorConfig(window_size_seconds=-60)
-        
+
         with pytest.raises(ValueError, match="Invalid window_size_seconds"):
             config.validate_config()
 
     def test_validate_config_zero_window_size_raises(self) -> None:
         """Test validate_config raises on zero window size."""
         config = ProcessorConfig(window_size_seconds=0)
-        
+
         with pytest.raises(ValueError, match="Invalid window_size_seconds"):
             config.validate_config()
 
     def test_validate_config_negative_max_retries_raises(self) -> None:
         """Test validate_config raises on negative max_retries."""
         config = ProcessorConfig(max_retries=-1)
-        
+
         with pytest.raises(ValueError, match="Invalid max_retries"):
             config.validate_config()
 
     def test_validate_config_negative_default_threshold_raises(self) -> None:
         """Test validate_config raises on negative default_threshold."""
         config = ProcessorConfig(default_threshold=-10.0)
-        
+
         with pytest.raises(ValueError, match="Invalid default_threshold"):
             config.validate_config()
 
@@ -41,7 +41,7 @@ class TestProcessorConfigValidation:
         config = ProcessorConfig(
             metric_thresholds={"cpu": -50.0}
         )
-        
+
         with pytest.raises(ValueError, match="Invalid threshold for cpu"):
             config.validate_config()
 
@@ -53,7 +53,7 @@ class TestProcessorConfigValidation:
             default_threshold=80.0,
             metric_thresholds={"cpu": 90.0}
         )
-        
+
         # Should not raise
         config.validate_config()
 
@@ -63,7 +63,7 @@ class TestProcessorConfigValidation:
             default_threshold=80.0,
             metric_thresholds={"cpu": 90.0}
         )
-        
+
         assert config.get_threshold("cpu") == 90.0
 
     def test_get_threshold_returns_default_for_unknown(self) -> None:
@@ -72,7 +72,7 @@ class TestProcessorConfigValidation:
             default_threshold=80.0,
             metric_thresholds={"cpu": 90.0}
         )
-        
+
         assert config.get_threshold("memory") == 80.0
 
 

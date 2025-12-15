@@ -85,11 +85,6 @@ class TestTelemetryWorkerTypeValidation:
         Args:
             worker: TelemetryWorker fixture.
         """
-        bounds = WindowBounds(
-            start=datetime(2025, 12, 12, 10, 0, 0, tzinfo=timezone.utc),
-            end=datetime(2025, 12, 12, 10, 1, 0, tzinfo=timezone.utc),
-            size_seconds=60.0,
-        )
         anomaly = AnomalyResult(
             is_anomaly=True,
             severity=AnomalySeverity.HIGH,

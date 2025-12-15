@@ -135,7 +135,7 @@ class TestTumblingWindowAggregator:
             metric_value=75.0,
             timestamp=datetime(2025, 12, 12, 10, 0, 30, tzinfo=timezone.utc),
         )
-        
+
         event2 = TelemetryEvent(
             device_id="router-02",
             interface="eth1",
@@ -146,11 +146,11 @@ class TestTumblingWindowAggregator:
 
         result1 = await aggregator.aggregate(event1)
         result2 = await aggregator.aggregate(event2)
-        
+
         # Both should accumulate without completion
         assert result1 is None
         assert result2 is None
-        
+
         # Should have two active windows
         assert len(aggregator._windows) == 2
 
@@ -173,9 +173,9 @@ class TestTumblingWindowAggregator:
             metric_value=75.0,
             timestamp=datetime(2025, 12, 12, 10, 0, 45, tzinfo=timezone.utc),
         )
-        
+
         await aggregator.aggregate(event)
-        
+
         # Trigger window completion
         next_event = TelemetryEvent(
             device_id="router-01",
@@ -184,9 +184,9 @@ class TestTumblingWindowAggregator:
             metric_value=80.0,
             timestamp=datetime(2025, 12, 12, 10, 1, 30, tzinfo=timezone.utc),
         )
-        
+
         result = await aggregator.aggregate(next_event)
-        
+
         if result:
             bounds = result.window_bounds
             assert bounds.start == datetime(2025, 12, 12, 10, 0, 0, tzinfo=timezone.utc)
@@ -211,9 +211,9 @@ class TestTumblingWindowAggregator:
             metric_value=75.0,
             timestamp=datetime(2025, 12, 12, 10, 0, 30, tzinfo=timezone.utc),
         )
-        
+
         await aggregator.aggregate(event1)
-        
+
         # Complete window with next event
         event2 = TelemetryEvent(
             device_id="router-01",
@@ -222,9 +222,9 @@ class TestTumblingWindowAggregator:
             metric_value=85.0,
             timestamp=datetime(2025, 12, 12, 10, 1, 30, tzinfo=timezone.utc),
         )
-        
+
         result = await aggregator.aggregate(event2)
-        
+
         if result:
             assert result.average == 75.0
             assert result.minimum == 75.0
@@ -245,8 +245,7 @@ class TestTumblingWindowAggregator:
         """
         # Add multiple events to same window
         values = [70.0, 75.0, 80.0, 85.0, 90.0]
-        base_timestamp = datetime(2025, 12, 12, 10, 0, 0, tzinfo=timezone.utc)
-        
+
         for i, value in enumerate(values):
             event = TelemetryEvent(
                 device_id="router-01",
@@ -256,7 +255,7 @@ class TestTumblingWindowAggregator:
                 timestamp=datetime(2025, 12, 12, 10, 0, 10 + i, tzinfo=timezone.utc),
             )
             await aggregator.aggregate(event)
-        
+
         # Complete window
         next_event = TelemetryEvent(
             device_id="router-01",
@@ -265,9 +264,9 @@ class TestTumblingWindowAggregator:
             metric_value=95.0,
             timestamp=datetime(2025, 12, 12, 10, 1, 30, tzinfo=timezone.utc),
         )
-        
+
         result = await aggregator.aggregate(next_event)
-        
+
         if result:
             assert result.count == 5
             assert result.minimum == 70.0
@@ -293,10 +292,10 @@ class TestTumblingWindowAggregator:
             metric_value=75.0,
             timestamp=datetime(2025, 12, 12, 10, 0, 30, tzinfo=timezone.utc),
         )
-        
+
         await aggregator.aggregate(event1)
         window_count_before = len(aggregator._windows)
-        
+
         # Complete window
         event2 = TelemetryEvent(
             device_id="router-01",
@@ -305,8 +304,8 @@ class TestTumblingWindowAggregator:
             metric_value=85.0,
             timestamp=datetime(2025, 12, 12, 10, 1, 30, tzinfo=timezone.utc),
         )
-        
+
         await aggregator.aggregate(event2)
-        
+
         # Old window should be cleaned, new one active
         assert len(aggregator._windows) == window_count_before

@@ -1,8 +1,6 @@
 """Tests for simulator main entry points."""
 
-from unittest.mock import patch
 
-import pytest
 
 from simulator.main import main
 

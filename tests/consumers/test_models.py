@@ -13,7 +13,7 @@ class TestConsumerMessage:
     def test_consumer_message_creation(self) -> None:
         """Test ConsumerMessage can be created with all fields."""
         timestamp = datetime(2025, 12, 15, 10, 0, 0, tzinfo=timezone.utc)
-        
+
         message = ConsumerMessage(
             message_id="1234567890-0",
             stream_name="telemetry",

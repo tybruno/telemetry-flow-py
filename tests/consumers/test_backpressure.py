@@ -90,7 +90,7 @@ class TestBackpressureManager:
 
         # Wait should not hang (tokens refill automatically)
         await asyncio.wait_for(manager.wait(), timeout=2.0)
-        
+
         # After waiting, should have tokens available
         assert manager._tokens > 0
         for _ in range(10):

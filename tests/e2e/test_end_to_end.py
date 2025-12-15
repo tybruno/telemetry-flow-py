@@ -3,16 +3,17 @@
 Tests complete workflows with real Redis and minimal mocking.
 """
 
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 from redis.asyncio import Redis
 
-from src.core.models import TelemetryEvent
-from src.streams.redis_stream import RedisStream
-from src.ingest.service import IngestService
 from src.aggregation.tumbling_window import TumblingWindowAggregator
-from src.detection.threshold import ThresholdDetector
 from src.alerts.console import ConsoleAlerter
+from src.core.models import TelemetryEvent
+from src.detection.threshold import ThresholdDetector
+from src.ingest.service import IngestService
+from src.streams.redis_stream import RedisStream
 
 
 @pytest.mark.integration
@@ -153,8 +154,8 @@ class TestEndToEndWorkflows:
 
     async def test_alert_generation(self) -> None:
         """Test alert generation for anomalies."""
-        from src.detection.models import AnomalyResult, AnomalySeverity
         from src.aggregation.models import WindowMetrics
+        from src.detection.models import AnomalyResult, AnomalySeverity
 
         alerter = ConsoleAlerter()
 

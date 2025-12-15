@@ -1,14 +1,15 @@
 """Complete tests for ConsumerErrorHandler retryability."""
 
 import asyncio
-from unittest.mock import AsyncMock
 
 import pytest
-from redis.exceptions import BusyLoadingError, ConnectionError as RedisConnectionError, TimeoutError as RedisTimeoutError
+from redis.exceptions import BusyLoadingError
+from redis.exceptions import ConnectionError as RedisConnectionError
+from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from src.consumers.deserializer import DeserializationError
 from src.consumers.error_handler import ConsumerErrorHandler
-from src.consumers.exceptions import ConsumerError, RetryExhaustedError
+from src.consumers.exceptions import ConsumerError
 
 
 class TestConsumerErrorHandlerRetryability:

@@ -1,12 +1,13 @@
 """Tests for Ingest Service implementation."""
 
-import pytest
-from unittest.mock import AsyncMock
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock
 
-from src.ingest.service import IngestService
-from src.ingest.models import IngestRequest
+import pytest
+
 from src.ingest.exceptions import InvalidPayloadError
+from src.ingest.models import IngestRequest
+from src.ingest.service import IngestService
 from src.streams.partitioner import StreamPartitioner
 
 

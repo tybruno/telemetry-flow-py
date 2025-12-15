@@ -70,7 +70,7 @@ class StreamPartitioner:
             num_partitions,
             base_stream_name,
         )
-    
+
     def __repr__(self) -> str:
         """Return string representation.
         
@@ -111,7 +111,7 @@ class StreamPartitioner:
         # Use MD5 hash for deterministic partitioning
         hash_bytes = hashlib.md5(device_id.encode("utf-8")).digest()
         hash_value = int.from_bytes(hash_bytes[:4], byteorder="big")
-        
+
         partition_number = hash_value % self._num_partitions
         return partition_number
 

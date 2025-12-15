@@ -5,8 +5,6 @@ Tests window state tracking, boundary calculations, and state transitions.
 
 from datetime import datetime, timezone
 
-import pytest
-
 from src.utils.time_windows import calculate_window_bounds
 
 

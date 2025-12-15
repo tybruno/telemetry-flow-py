@@ -9,9 +9,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.aggregation.models import WindowBounds, WindowMetrics
-from src.aggregation.tumbling_window import TumblingWindowAggregator
 from src.core.models import TelemetryEvent
-from src.detection.models import AnomalyResult, AnomalySeverity
 from src.detection.threshold import ThresholdDetector
 from src.processor.worker import TelemetryWorker
 
@@ -69,13 +67,13 @@ class TestProcessorIntegration:
             await worker.start()
 
         task = asyncio.create_task(run_worker())
-        
+
         # Give it time to process the event
         await asyncio.sleep(0.1)
-        
+
         # Stop worker
         worker._running = False
-        
+
         # Wait for task to complete
         try:
             await asyncio.wait_for(task, timeout=1.0)

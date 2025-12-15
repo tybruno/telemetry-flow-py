@@ -70,7 +70,7 @@ class ProcessorConfig(BaseSettings):
     )
     partition_id: int | None = None
     num_partitions: int | None = None
-    
+
     def get_stream_name(self) -> str:
         """Get the stream name for this processor.
         
@@ -96,7 +96,7 @@ class ProcessorConfig(BaseSettings):
         if self.partition_id is not None:
             partitioned_stream_name = f"{self.stream_name}:{self.partition_id}"
             return partitioned_stream_name
-        
+
         stream_name = self.stream_name
         return stream_name
 
@@ -124,14 +124,14 @@ class ProcessorConfig(BaseSettings):
             raise ValueError(
                 f"Invalid default_threshold: {self.default_threshold}"
             ) from None
-            
+
         # Validate partition configuration
         if self.partition_id is not None:
             if self.num_partitions is None:
                 error_message = "num_partitions required when partition_id is set"
                 _log.error(error_message)
                 raise ValueError(error_message) from None
-            
+
             if self.partition_id < 0 or self.partition_id >= self.num_partitions:
                 error_message = "partition_id=%d must be in range [0, %d)"
                 _log.error(error_message, self.partition_id, self.num_partitions)

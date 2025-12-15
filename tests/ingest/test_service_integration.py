@@ -3,14 +3,15 @@
 Tests FastAPI endpoints and Redis Stream publishing.
 """
 
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 from httpx import AsyncClient
 from redis.asyncio import Redis
 
+from src.core.models import TelemetryEvent
 from src.ingest.service import IngestService, create_app
 from src.streams.redis_stream import RedisStream
-from src.core.models import TelemetryEvent
 
 
 @pytest.mark.integration

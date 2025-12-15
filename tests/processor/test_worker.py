@@ -431,7 +431,7 @@ class TestTelemetryWorker:
             metric_value=75.0,
             timestamp=datetime(2025, 12, 12, 10, 0, 0, tzinfo=timezone.utc),
         )
-        
+
         bounds = WindowBounds(
             start=datetime(2025, 12, 12, 10, 0, 0, tzinfo=timezone.utc),
             end=datetime(2025, 12, 12, 10, 1, 0, tzinfo=timezone.utc),
@@ -486,7 +486,7 @@ class TestTelemetryWorker:
             metric_value=95.0,
             timestamp=datetime(2025, 12, 12, 10, 0, 0, tzinfo=timezone.utc),
         )
-        
+
         bounds = WindowBounds(
             start=datetime(2025, 12, 12, 10, 0, 0, tzinfo=timezone.utc),
             end=datetime(2025, 12, 12, 10, 1, 0, tzinfo=timezone.utc),
@@ -504,7 +504,7 @@ class TestTelemetryWorker:
             count=10,
             sum=950.0,
         )
-        
+
         anomaly = AnomalyResult(
             is_anomaly=True,
             severity=AnomalySeverity.HIGH,
@@ -536,9 +536,9 @@ class TestTelemetryWorker:
         """
         # Start worker
         worker._running = True
-        
+
         # Stop worker
         await worker.stop()
-        
+
         # Verify stopped
         assert worker._running is False

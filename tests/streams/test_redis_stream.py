@@ -1,7 +1,8 @@
 """Tests for Redis Streams implementation."""
 
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 import redis
 
 from src.streams.exceptions import StreamError
@@ -44,7 +45,7 @@ class TestRedisStreamConsume:
         """Test consuming messages from stream."""
         stream = RedisStream(url="redis://localhost:6379/0")
         stream._client = AsyncMock()
-        
+
         stream._client.xreadgroup = AsyncMock(side_effect=[
             [[b"telemetry", [(b"1-0", {b"device_id": b"router-01"})]]],
             None
