@@ -55,7 +55,7 @@ This system processes network telemetry data from simulated devices through a di
 ### Prerequisites
 
 - **Docker & Docker Compose**: For containerized deployment
-- **Python 3.11+**: For local development
+- **Python 3.10+**: For local development
 - **Redis**: Included in Docker Compose
 
 ### Run the Complete System
