@@ -83,7 +83,7 @@ async def send_telemetry(
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{ingest_url}/telemetry",
+                f"{ingest_url}/api/v1/telemetry",
                 json=payload,
                 timeout=5.0,
             )
@@ -300,10 +300,14 @@ def main() -> int:
             # Custom ingest URL
             INGEST_URL=http://ingest:8000 python -m simulator
     """
-    from src.utils.logging import setup_logging
-
     log_level = os.getenv("LOG_LEVEL", "INFO")
-    setup_logging(level=log_level)
+    logging_numeric_level = getattr(_log, log_level.upper(), _log.INFO)
+
+    _log.basicConfig(
+        level=logging_numeric_level,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
 
     try:
         asyncio.run(run_simulator())

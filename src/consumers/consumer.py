@@ -141,7 +141,7 @@ class TelemetryConsumer:
 
         await self._setup_consumer_group()
 
-        async for message_id, data in await self._stream.consume(
+        async for message_id, data in self._stream.consume(
             stream=self._stream_name,
             group=self._group_name,
             consumer_name=self._consumer_name,

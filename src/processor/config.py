@@ -6,7 +6,8 @@ Class:
 
 import logging as _log
 
-from pydantic_settings import BaseSettings
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ProcessorConfig(BaseSettings):
@@ -39,6 +40,12 @@ class ProcessorConfig(BaseSettings):
         )
     """
 
+    model_config = SettingsConfigDict(
+        env_prefix="PROCESSOR_",
+        env_file="config/processor.yaml",
+        extra="ignore",
+    )
+
     window_size_seconds: int = 60
     consumer_group: str = "telemetry-processors"
     consumer_name_prefix: str = "processor"
@@ -46,14 +53,10 @@ class ProcessorConfig(BaseSettings):
     default_threshold: float = 80.0
     metric_thresholds: dict[str, float] = {}
     stream_name: str = "telemetry"
-    redis_url: str = "redis://localhost:6379"
-
-    class Config:
-        """Pydantic configuration."""
-
-        env_prefix = "PROCESSOR_"
-        env_file = "config/processor.yaml"
-        extra = "ignore"
+    redis_url: str = Field(
+        default="redis://localhost:6379",
+        validation_alias="REDIS_URL",
+    )
 
     def validate_config(self) -> None:
         """Validate configuration values.
