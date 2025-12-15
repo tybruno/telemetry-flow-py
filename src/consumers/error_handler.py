@@ -310,7 +310,7 @@ class ConsumerErrorHandler:
 
         # Add jitter (± 10%) to prevent thundering herd
         jitter_range = capped_delay * 0.1
-        jitter = random.uniform(-jitter_range, jitter_range)
+        jitter = random.uniform(-jitter_range, jitter_range)  # noqa: S311
 
         final_delay = capped_delay + jitter
 

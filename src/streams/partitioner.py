@@ -111,7 +111,7 @@ class StreamPartitioner:
             raise ValueError(error_message) from None
 
         # Use MD5 hash for deterministic partitioning
-        hash_bytes = hashlib.md5(device_id.encode("utf-8")).digest()
+        hash_bytes = hashlib.md5(device_id.encode("utf-8")).digest()  # noqa: S324
         hash_value = int.from_bytes(hash_bytes[:4], byteorder="big")
 
         partition_number = hash_value % self._num_partitions

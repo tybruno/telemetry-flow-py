@@ -205,7 +205,7 @@ def main() -> int:
 
     try:
         # Load configuration from environment
-        host = os.getenv("INGEST_API_HOST", "0.0.0.0")
+        host = os.getenv("INGEST_API_HOST", "0.0.0.0")  # noqa: S104
         port = int(os.getenv("INGEST_API_PORT", "8000"))
         redis_url = os.getenv("REDIS_URL")
 
