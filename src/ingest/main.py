@@ -39,9 +39,69 @@ Example:
         # POST to http://localhost:8000/telemetry
 """
 
+import logging as _log
+import os
 import sys
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from typing import cast
 
+import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from src.core.protocols import StreamProtocol
+from src.ingest.api import router
+from src.ingest.dependencies import initialize_service
+from src.streams.redis_stream import RedisStream
+
+# Environment configuration (loaded at module level)
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Manage application lifespan events.
+
+    Handles startup and shutdown of resources using modern
+    async context manager pattern.
+
+    Args:
+        app: FastAPI application instance.
+
+    Yields:
+        None during application runtime.
+    """
+    # Startup: Initialize dependencies
+    _log.info("Starting ingest service...")
+
+    # Get Redis URL from app state (set by main)
+    redis_url = getattr(app.state, "redis_url", REDIS_URL)
+
+    # Initialize Redis stream
+    stream = RedisStream(url=redis_url)
+    app.state.stream = stream
+    _log.info("Redis stream initialized: url=%s", redis_url)
+
+    # Initialize service dependencies
+    initialize_service(stream=cast(StreamProtocol, stream))
+    _log.info("Ingest service dependencies initialized")
+
+    yield
+
+    # Shutdown: Clean up resources
+    _log.info("Shutting down ingest service...")
+
+    # Close Redis connection if exists
+    if app.state.stream is not None:
+        try:
+            await app.state.stream.close()
+            _log.info("Redis connection closed")
+        except Exception as e:
+            _log.error("Error closing Redis connection: %s", str(e))
+
+    _log.info("Ingest service shutdown complete")
 
 
 def create_app() -> FastAPI:
@@ -59,37 +119,30 @@ def create_app() -> FastAPI:
             app = create_app()
             client = TestClient(app)
     """
-    raise NotImplementedError
+    app = FastAPI(
+        title="Telemetry Ingest Service",
+        description="HTTP API for ingesting network device telemetry data",
+        version="0.1.0",
+        docs_url="/docs",
+        redoc_url="/redoc",
+        lifespan=lifespan,
+    )
 
+    # Add CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-async def startup_event() -> None:
-    """Application startup event handler.
+    # Register routers
+    app.include_router(router)
 
-    Initializes dependencies (Redis connection, services) when
-    the application starts.
+    _log.info("FastAPI application created")
 
-    Example:
-        Registered on app::
-
-            app = FastAPI()
-            app.add_event_handler("startup", startup_event)
-    """
-    raise NotImplementedError
-
-
-async def shutdown_event() -> None:
-    """Application shutdown event handler.
-
-    Cleanly shuts down connections and resources when
-    the application stops.
-
-    Example:
-        Registered on app::
-
-            app = FastAPI()
-            app.add_event_handler("shutdown", shutdown_event)
-    """
-    raise NotImplementedError
+    return app
 
 
 def main() -> int:
@@ -130,13 +183,72 @@ def main() -> int:
 
             # Service available at http://localhost:8000/telemetry
     """
-    raise NotImplementedError
+    # Configure logging
+    log_level = os.getenv("LOG_LEVEL", "INFO")
+    logging_numeric_level = getattr(_log, log_level.upper(), _log.INFO)
+
+    _log.basicConfig(
+        level=logging_numeric_level,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    _log.info("Starting telemetry ingest service")
+
+    try:
+        # Load configuration from environment
+        host = os.getenv("INGEST_API_HOST", "0.0.0.0")
+        port = int(os.getenv("INGEST_API_PORT", "8000"))
+        redis_url = os.getenv("REDIS_URL")
+
+        if not redis_url:
+            error_message = "REDIS_URL environment variable is required"
+            _log.error(error_message)
+            return 1
+
+        _log.info("Configuration: host=%s, port=%d, redis=%s", host, port, redis_url)
+
+        # Create FastAPI application
+        app = create_app()
+
+        # Store redis_url in app state for lifespan to use
+        app.state.redis_url = redis_url
+
+        # Run uvicorn server
+        _log.info("Starting uvicorn server on %s:%d", host, port)
+        uvicorn.run(
+            app,
+            host=host,
+            port=port,
+            log_level=log_level.lower(),
+            access_log=True,
+        )
+
+        _log.info("Ingest service shutdown cleanly")
+        return 0
+
+    except ValueError as e:
+        # Configuration error
+        _log.error("Configuration error: %s", str(e))
+        return 1
+
+    except ConnectionError as e:
+        # Connection error
+        _log.error("Connection error: %s", str(e))
+        return 2
+
+    except KeyboardInterrupt:
+        _log.info("Ingest service interrupted by user")
+        return 0
+
+    except Exception as e:
+        # Runtime error
+        _log.error("Ingest service failed: %s", str(e))
+        return 3
 
 
 if __name__ == "__main__":
     sys.exit(main())
-
-
 __all__ = [
     "create_app",
     "main",

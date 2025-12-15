@@ -39,8 +39,7 @@ class BaseAggregator(ABC):
                     event.interface,
                     event.metric_name
                 )
-                # Tumbling window aggregation logic
-                raise NotImplementedError
+
     """
 
     _window_size_seconds: int
@@ -75,7 +74,6 @@ class BaseAggregator(ABC):
         Returns:
             Aggregated metric if window is complete, None otherwise.
         """
-        raise NotImplementedError
 
     def _generate_window_key(
         self, device_id: str, interface: str, metric_name: str

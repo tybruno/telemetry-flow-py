@@ -41,7 +41,25 @@ Example:
         docker-compose up --scale processor=3
 """
 
+import asyncio
+import logging as _log
+import os
 import sys
+import uuid
+from typing import cast
+
+from src.aggregation.tumbling_window import TumblingWindowAggregator
+from src.alerts.console import ConsoleAlerter
+from src.consumers.backpressure import BackpressureManager
+from src.consumers.consumer import TelemetryConsumer
+from src.consumers.deserializer import MessageDeserializer
+from src.consumers.error_handler import ConsumerErrorHandler
+from src.core.protocols import AlerterProtocol, StorageProtocol, StreamProtocol
+from src.detection.threshold import ThresholdDetector
+from src.processor.config import ProcessorConfig
+from src.processor.worker import TelemetryWorker
+from src.storage.redis_store import RedisStore
+from src.streams.redis_stream import RedisStream
 
 
 async def run_worker() -> None:
@@ -74,7 +92,97 @@ async def run_worker() -> None:
     Example:
         await run_worker()  # Runs until interrupted
     """
-    raise NotImplementedError
+    _log.info("Initializing telemetry processor worker")
+
+    # Load configuration
+    config = ProcessorConfig()
+    config.validate_config()
+
+    _log.info(
+        "Configuration loaded: window_size=%ds, threshold=%.2f",
+        config.window_size_seconds,
+        config.default_threshold,
+    )
+
+    # Generate unique consumer name for this worker instance
+    consumer_name = f"{config.consumer_name_prefix}-{uuid.uuid4().hex[:8]}"
+
+    # Initialize stream connection
+    stream = RedisStream(url=config.redis_url)
+
+    # Create consumer group if it doesn't exist
+    try:
+        await stream.create_consumer_group(
+            stream=config.stream_name,
+            group=config.consumer_group,
+            start_id="0",  # Process from beginning on first run
+        )
+        _log.info(
+            "Created consumer group: %s for stream: %s",
+            config.consumer_group,
+            config.stream_name,
+        )
+    except Exception as e:
+        # Consumer group may already exist, which is fine
+        _log.debug("Consumer group setup: %s", str(e))
+
+    # Initialize pipeline components
+    deserializer = MessageDeserializer()
+    error_handler = ConsumerErrorHandler(max_retries=config.max_retries)
+    backpressure = BackpressureManager(max_rate=1000, window_seconds=1)
+
+    consumer = TelemetryConsumer(
+        stream=cast(StreamProtocol, stream),
+        deserializer=deserializer,
+        error_handler=error_handler,
+        backpressure=backpressure,
+        stream_name=config.stream_name,
+        group_name=config.consumer_group,
+        consumer_name=consumer_name,
+    )
+
+    aggregator = TumblingWindowAggregator(
+        window_size=config.window_size_seconds
+    )
+
+    detector = ThresholdDetector(
+        thresholds=config.metric_thresholds,
+        default_threshold=config.default_threshold,
+    )
+
+    storage = RedisStore(url=config.redis_url)
+    alerter = cast(AlerterProtocol, ConsoleAlerter())
+
+    # Create and start worker
+    worker = TelemetryWorker(
+        consumer=consumer,
+        aggregator=aggregator,
+        detector=detector,
+        storage=cast(StorageProtocol, storage),
+        alerter=alerter,
+    )
+
+    _log.info("Starting worker: %s", consumer_name)
+
+    try:
+        await worker.start()
+    except KeyboardInterrupt:
+        _log.info("Received shutdown signal")
+    except Exception as e:
+        _log.error("Worker failed with error: %s", str(e))
+        raise
+    finally:
+        await worker.stop()
+
+        # Clean up resources
+        try:
+            await storage.close()
+            await stream.close()
+            _log.info("Resources cleaned up")
+        except Exception as e:
+            _log.error("Error during resource cleanup: %s", str(e))
+
+        _log.info("Worker shutdown complete")
 
 
 def main() -> int:
@@ -113,7 +221,47 @@ def main() -> int:
             # Multiple workers (scale horizontally)
             docker-compose up --scale processor=3
     """
-    raise NotImplementedError
+    # Configure logging
+    log_level = os.getenv("LOG_LEVEL", "INFO")
+    logging_numeric_level = getattr(_log, log_level.upper(), _log.INFO)
+
+    _log.basicConfig(
+        level=logging_numeric_level,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    _log.info("Starting telemetry processor service")
+
+    try:
+        # Validate configuration early
+        config = ProcessorConfig()
+        config.validate_config()
+
+        # Run async worker
+        asyncio.run(run_worker())
+
+        _log.info("Processor service shutdown cleanly")
+        return 0
+
+    except ValueError as e:
+        # Configuration error
+        _log.error("Configuration error: %s", str(e))
+        return 1
+
+    except ConnectionError as e:
+        # Connection error
+        _log.error("Connection error: %s", str(e))
+        return 2
+
+    except KeyboardInterrupt:
+        _log.info("Processor service interrupted by user")
+        return 0
+
+    except Exception as e:
+        # Processing error
+        _log.error("Processor service failed: %s", str(e))
+        return 3
 
 
 if __name__ == "__main__":

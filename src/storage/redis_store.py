@@ -196,6 +196,22 @@ class RedisStore(BaseStorage):
         """
         await self.set(key=key, value=value)
 
+    async def get(self, key: str) -> dict[str, Any] | None:
+        """Retrieve a value by key (StorageProtocol compatibility).
+
+        Args:
+            key: Storage key to retrieve.
+
+        Returns:
+            Dictionary value if key exists, None otherwise.
+
+        Raises:
+            ValueError: If key is empty.
+            StorageError: If retrieval operation fails.
+        """
+        result = await self.retrieve(key)
+        return result
+
     async def close(self) -> None:
         """Close Redis connection.
 
