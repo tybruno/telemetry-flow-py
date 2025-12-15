@@ -18,10 +18,10 @@ help:
 
 # Installation
 install:
-	pip install -r requirements.txt
+	pip install -e .
 
 install-dev:
-	pip install -r requirements.txt -r requirements-test.txt
+	pip install -e ".[dev]"
 
 # Cleanup
 clean:

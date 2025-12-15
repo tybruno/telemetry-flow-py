@@ -78,8 +78,14 @@ docker-compose down
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt -r requirements-test.txt
+# Install core dependencies
+pip install -e .
+
+# Install with development dependencies
+pip install -e ".[dev]"
+
+# Or use Makefile
+make install-dev
 
 # Run tests with coverage
 make test-cov
