@@ -249,34 +249,11 @@ GET /health
 
 ---
 
-## Testing
-
-The project includes **544 comprehensive tests** with **97% code coverage**, combining both unit and integration tests.
-
-### Quick Testing Commands
-
-```bash
-# Run all tests (unit + integration)
-make test
-
-# Run unit tests only (fast, no Docker required)
-make test-unit
-
-# Run tests with coverage report
-make test-cov
-
-# Generate HTML coverage report
-make test-cov-html
-```
-
-For detailed testing information including Docker setup, test organization, running specific tests, and more:
-
-**See [CONTRIBUTING.md](CONTRIBUTING.md#testing) for comprehensive testing guide.**
-
----
-
 ## Development
 
+For comprehensive development guidance including code quality standards, testing requirements, adding new features, and publishing to PyPI:
+
+**See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete development guide.**
 
 ### Quick Reference
 
