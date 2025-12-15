@@ -160,6 +160,13 @@ make fix
    - Simulator tests with 98% coverage
    - Full coverage of exceptions, models, and core business logic
 
+4. **CI/CD Pipeline**
+   - Automated testing across Python 3.10, 3.11, 3.12
+   - Automated linting (ruff) and type checking (mypy)
+   - Automated PyPI publishing on GitHub releases
+   - OpenID Connect (OIDC) trusted publishing (no API tokens)
+   - TestPyPI support for pre-release validation
+
 ---
 
 ## Architecture & Design
@@ -308,6 +315,33 @@ make typecheck
 3. **Update documentation** (docstrings, README, ARCHITECTURE.md)
 4. **Run checks**: `make check && make test-cov`
 5. **Commit with descriptive message**
+
+### Publishing to PyPI
+
+The project includes automated PyPI publishing via GitHub Actions:
+
+**Creating a Release:**
+```bash
+# Tag the release
+git tag -a v0.1.0 -m "Release version 0.1.0"
+git push origin v0.1.0
+
+# Or create a release through GitHub UI
+# This automatically triggers the publish workflow
+```
+
+**Release Process:**
+1. **Create GitHub Release** with version tag (e.g., `v0.1.0`)
+2. **Automated Build** - GitHub Actions builds package distributions
+3. **Publish to PyPI** - Package automatically published using OIDC trusted publishing
+4. **Pre-releases** - Marked as pre-release publishes to TestPyPI instead
+
+**Installation from PyPI** (after publishing):
+```bash
+pip install telemetry-system
+```
+
+**For detailed CI/CD configuration, see:** [docs/METHODOLOGY.md](docs/METHODOLOGY.md#phase-4-development-infrastructure)
 
 ---
 

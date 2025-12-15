@@ -148,13 +148,21 @@ class TumblingWindowAggregator(BaseAggregator):
    - Code coverage reporting (Codecov integration)
    - Dependabot for dependency updates
 
-3. **Code Quality Standards**
+3. **Continuous Delivery**
+   - PyPI publishing workflow (`.github/workflows/publish.yml`)
+   - Automated package building and distribution
+   - Triggered on GitHub releases (tags)
+   - Supports both PyPI (production) and TestPyPI (pre-releases)
+   - Uses OpenID Connect (OIDC) trusted publishing for secure authentication
+   - No API tokens stored in repository secrets
+
+4. **Code Quality Standards**
    - Type checking: mypy strict mode, 100% annotation coverage
    - Linting: ruff with comprehensive rule set
    - Documentation: Google-style docstrings with complete sections
    - Testing: pytest framework with fixtures and parametrization
 
-**Outcome:** Production-ready development environment enabling consistent code quality across all contributors.
+**Outcome:** Production-ready development environment enabling consistent code quality across all contributors, with automated CI/CD pipeline for seamless package publishing.
 
 ---
 
