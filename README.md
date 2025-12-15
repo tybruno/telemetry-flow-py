@@ -1,4 +1,4 @@
-# Network Telemetry Processing & Anomaly Detection
+# telemetry-flow-py
 
 A distributed system for processing network telemetry data in real-time, performing time-windowed aggregation, and detecting anomalies through threshold-based analysis.
 
@@ -338,7 +338,7 @@ git push origin v0.1.0
 
 **Installation from PyPI** (after publishing):
 ```bash
-pip install telemetry-system
+pip install telemetry-flow-py
 ```
 
 **For detailed CI/CD configuration, see:** [docs/METHODOLOGY.md](docs/METHODOLOGY.md#phase-4-development-infrastructure)
