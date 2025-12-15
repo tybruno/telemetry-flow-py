@@ -2163,3 +2163,103 @@ Modify the ingest so that actually is implemented.
 - ✅ Follows all coding standards (logging with _log, %s formatting, type annotations, defensive programming)
 
 **Commit:** c8ae55e - "feat: implement processor and ingest service main entry points"
+
+---
+
+## Interaction: Metric-Specific Threshold Detection Enhancement
+**Tool:** GitHub Copilot (Claude Sonnet 4.5)  
+**Mode:** Chat  
+**Instructions File:** `.github/copilot-instructions.md`  
+**Purpose:** Fix WindowMetrics model to include device context for proper metric-specific threshold detection
+
+### Prompt
+```
+Let's go ahead and update that issue with the window metrics, not using metric name.
+```
+
+### AI Response Summary
+Enhanced WindowMetrics model and ThresholdDetector to support metric-specific threshold detection. Previously, WindowMetrics lacked device context (device_id, interface, metric_name), forcing ThresholdDetector to always use the default threshold. This enhancement enables proper per-metric threshold configuration as intended.
+
+**Problem Identified:**
+- WindowMetrics model only contained statistical data (average, min, max, etc.)
+- No device context meant ThresholdDetector couldn't determine which metric was being evaluated
+- Comment in threshold.py acknowledged: "Note: In a real implementation, we'd need access to metric_name"
+- System worked but couldn't use metric-specific thresholds configured in ProcessorConfig
+
+**Solution Implemented:**
+
+1. **WindowMetrics Model Enhancement** (`src/aggregation/models.py`)
+   - Added `device_id: str` field for device identification
+   - Added `interface: str` field for interface name
+   - Added `metric_name: str` field for metric type identification
+   - Updated docstring with enhanced example showing new context fields
+   - These fields enable metric-specific threshold lookups
+
+2. **TumblingWindowAggregator Updates** (`src/aggregation/tumbling_window.py`)
+   - Modified `_create_window_bounds()` signature to accept `window_key` parameter
+   - Enhanced method to extract and return device context from window_key tuple
+   - Returns tuple: `(WindowBounds, device_id, interface, metric_name)`
+   - Modified `_finalize_window()` to unpack context and pass to WindowMetrics constructor
+   - All WindowMetrics instantiations now include full device context
+
+3. **ThresholdDetector Enhancement** (`src/detection/threshold.py`)
+   - Updated `is_anomaly()` to use `metric.metric_name` for threshold lookup
+   - Now uses: `threshold = self._thresholds.get(metric.metric_name, self._default_threshold)`
+   - Removed comment acknowledging missing metric_name access
+   - Updated `create_anomaly_result()` to use metric-specific thresholds
+   - Proper metric-specific detection now functional
+
+4. **Test Fixture Updates** (`tests/detection/conftest.py`)
+   - Added `sample_window_bounds` fixture returning WindowBounds instance
+   - Implemented `sample_window_metrics` with device context: router-01, eth0, cpu_utilization
+   - Implemented `threshold_config` returning dict with cpu_utilization:80.0, bandwidth_utilization:90.0, error_rate:1.0
+   - Implemented `normal_metrics` fixture with values below thresholds
+   - Implemented `anomalous_metrics` fixture with values exceeding thresholds
+   - All fixtures now provide realistic test data
+
+5. **Test Suite Updates**
+   - Automated addition of required fields to all WindowMetrics instantiations
+   - Created Python script to add `device_id`, `interface`, `metric_name` fields systematically
+   - Updated 6 test files with 20 WindowMetrics instantiations
+   - Fixed test expectation in `test_classify_severity` (detector fixture uses 90.0 threshold for cpu_utilization)
+   - All 360 tests passing with 71% coverage
+
+**Validation:**
+- ✅ All 360 tests passing
+- ✅ 71% code coverage maintained
+- ✅ Docker deployment verified working (6 services running)
+- ✅ End-to-end flow tested: simulator → ingest → streams → processors → windows → detection
+- ✅ Window completion logs showing correct aggregation
+- ✅ No errors in any service logs
+
+**Impact:**
+- **Before**: ThresholdDetector could only use default threshold (80.0) for all metrics
+- **After**: ThresholdDetector uses metric-specific thresholds (cpu_utilization:90.0, bandwidth_utilization:95.0, etc.)
+- **Benefit**: More accurate anomaly detection with different sensitivity levels per metric type
+- **Example**: CPU can have 90% threshold while error_rate has 1% threshold
+
+**Files Modified:**
+- `src/aggregation/models.py` - Added device_id, interface, metric_name fields to WindowMetrics
+- `src/aggregation/tumbling_window.py` - Enhanced to extract and pass context
+- `src/detection/threshold.py` - Implemented metric-specific threshold lookup
+- `tests/detection/conftest.py` - Fully implemented all test fixtures
+- `tests/detection/test_base_detector_edge_cases.py` - Added required WindowMetrics fields
+- `tests/detection/test_threshold.py` - Added fields, fixed severity test expectation
+- `tests/detection/test_threshold_anomaly_creation.py` - Added required fields
+- `tests/processor/test_integration.py` - Added required fields
+- `tests/processor/test_worker.py` - Added required fields
+- `tests/processor/test_worker_type_validation.py` - Added required fields
+
+**Technical Approach:**
+Used Python script to automate test fixes:
+```python
+# Pattern matching to find WindowMetrics( instantiations
+pattern = r'(WindowMetrics\(\s*)(window_bounds=)'
+# Added device context before window_bounds parameter
+replacement = r'\1device_id="router-01",\n            interface="eth0",\n            metric_name="cpu_utilization",\n            \2'
+```
+
+**Commit:** `cd74321` - "feat: add metric context to WindowMetrics for metric-specific thresholds"
+
+**Outcome:**
+System now properly supports metric-specific thresholds as designed in ProcessorConfig. This completes the anomaly detection feature to work as intended with different sensitivity levels per metric type.

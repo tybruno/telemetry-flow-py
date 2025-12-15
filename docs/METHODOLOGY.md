@@ -158,6 +158,110 @@ class TumblingWindowAggregator(BaseAggregator):
 
 ---
 
+### Phase 5: AI-Assisted Development Workflow
+**Objective:** Leverage AI tooling to accelerate design and implementation while maintaining code quality.
+
+**Context:** This entire project was developed using AI assistance due to repetitive strain injury (RSI), demonstrating how modern AI tools can enable productive software development with minimal manual typing.
+
+**Tooling Stack:**
+1. **VS Code GitHub Copilot with Claude Sonnet 4.5**
+   - 100% of code written through Copilot chat and inline suggestions
+   - Voice-to-text combined with Copilot for hands-free development
+   - Claude Sonnet 4.5 model provides state-of-the-art code generation and reasoning
+
+2. **Copilot Instructions** ([`.github/copilot-instructions.md`](../.github/copilot-instructions.md))
+   - Project-wide coding standards and patterns defined once
+   - Eliminates repetitive prompting and nitpicking
+   - Ensures consistent code quality across all AI-generated code
+   - Includes: SOLID principles, type safety requirements, docstring standards, testing patterns
+
+**Development Workflow:**
+
+**Stage 1: Design Exploration (Design Read Only Agent)**
+- Purpose: Explore architectural options and design patterns without creating files
+- Agent behavior: Read-only mode, displays design thinking in Copilot chat window
+- Output: Architecture discussions, pattern recommendations, trade-off analysis
+- Benefits:
+  - Rapid iteration on design ideas without file clutter
+  - Multiple architectural approaches explored before committing
+  - Design rationale captured in chat for documentation
+
+**Stage 2: Design Materialization (Design Placeholder Stubs Agent)**
+- Purpose: Create concrete file structure and interface definitions
+- Agent behavior: Generates actual files with placeholder implementations
+- Output: Complete directory structure, protocol definitions, stub classes with docstrings
+- Benefits:
+  - IDE immediately shows type errors, linting issues, import problems
+  - Object relationships visible through type annotations
+  - Autocomplete works for non-existent implementations
+  - Mypy validates interface compatibility before any implementation
+
+**Stage 3: Workflow & Standards Setup**
+- Created GitHub Actions workflows for multi-developer environment:
+  - Automated testing across Python 3.10, 3.11, 3.12
+  - Linting and type checking on every PR
+  - Code coverage reporting
+  - Branch protection and merge conflict prevention
+- Established pre-implementation standards:
+  - Coding style (ruff configuration)
+  - Type checking requirements (mypy strict mode)
+  - Documentation standards (Google-style docstrings)
+  - Testing requirements (pytest, >70% coverage)
+
+**Stage 4: Story & Subtask Creation**
+- Generated proposed user stories and subtasks from stubs ([`PROPOSED_STORIES.md`](PROPOSED_STORIES.md))
+- Each placeholder class/method becomes an assignable task
+- Subtasks include:
+  - Exact file path and method signature
+  - Expected behavior from docstring
+  - Success criteria (tests passing, type checking)
+  - Integration points (which protocols to implement)
+- Benefits:
+  - Engineers know precisely what to implement
+  - No ambiguity about interfaces or contracts
+  - Parallel work enabled without coordination overhead
+
+**Stage 5: Implementation (Standard Copilot Agent)**
+- Purpose: Replace placeholder code with actual implementations
+- Process:
+  1. Select stub method in IDE
+  2. Instruct Copilot: "Implement this method according to the docstring"
+  3. Copilot generates implementation using full project context
+  4. IDE immediately validates types, linting, imports
+  5. Write tests (often Copilot-generated from patterns)
+  6. Run quality checks (`make check`)
+- Benefits:
+  - Implementation is fastest phase (stubs provide complete context)
+  - Type safety prevents integration errors
+  - Tests follow established patterns
+  - No architectural decisions needed (already made in design phase)
+
+**Key Insights:**
+
+**Why Copilot Instructions Are Critical:**
+- Without `.github/copilot-instructions.md`, every AI interaction requires:
+  - "Use Google-style docstrings"
+  - "Follow SOLID principles"
+  - "Add type annotations"
+  - "Use slots in dataclasses"
+  - "Log before raising exceptions"
+- With instructions: All standards applied automatically, reducing cognitive load and repetitive prompting
+
+**Why Design Agents Are Essential:**
+- **Design Read Only**: Safe exploration without committing to file structure
+- **Design Placeholder Stubs**: Bridges design thinking to concrete implementation
+- **Standard Implementation**: Fast execution once interfaces are defined
+
+**RSI Accommodation:**
+- Voice-to-text + Copilot chat eliminates typing
+- Copilot inline suggestions reduce keystrokes by ~80%
+- Natural language instructions replace code writing
+- Review and validate > manually type code
+
+**Outcome:** Complete project development with minimal manual typing, demonstrating AI-assisted development at scale while maintaining professional code quality standards.
+
+---
+
 ## Key Advantages of This Approach
 
 ### 1. Parallel Development Enabled

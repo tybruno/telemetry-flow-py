@@ -8,6 +8,33 @@ A distributed system for processing network telemetry data in real-time, perform
 
 ---
 
+## About This Assignment
+
+This is a **take-home assignment** demonstrating the design and implementation of a distributed telemetry processing system. The challenge was to build a real-time network monitoring system capable of ingesting device metrics, performing time-windowed aggregation, and detecting anomalies through distributed worker processing.
+
+**Development Approach:**
+This project was developed entirely using **AI-assisted development** with GitHub Copilot (Claude Sonnet 4.5), demonstrating modern development practices:
+- 100% code written through VS Code Copilot chat and suggestions
+- Design-first methodology with specialized Copilot agents (Design Read Only, Design Placeholder Stubs)
+- Comprehensive coding standards defined in [`.github/copilot-instructions.md`](.github/copilot-instructions.md)
+- AI-generated tests, documentation, and implementation following project-wide standards
+
+**For complete development methodology and AI workflow, see:** [docs/METHODOLOGY.md](docs/METHODOLOGY.md#phase-5-ai-assisted-development-workflow)
+
+**Assignment Requirements:**
+- ✅ Distributed telemetry ingest service (HTTP/FastAPI)
+- ✅ Stream-based event processing (Redis Streams with consumer groups)
+- ✅ Multiple concurrent processor workers with load distribution
+- ✅ Time-windowed metric aggregation (60-second tumbling windows)
+- ✅ Threshold-based anomaly detection with alerts
+- ✅ Dynamic configuration and backpressure management
+- ✅ Docker Compose orchestration with device simulator
+- ✅ Comprehensive testing (360 tests, 71% coverage)
+
+**For complete assignment details and original requirements, see:** [ASSIGNMENT.md](ASSIGNMENT.md)
+
+---
+
 ## Overview
 
 This system processes network telemetry data from simulated devices through a distributed pipeline:
@@ -17,36 +44,9 @@ This system processes network telemetry data from simulated devices through a di
 3. **Processor Workers**: Multiple workers consume events, aggregate metrics in time windows, and detect anomalies
 4. **Alert System**: Console-based alerts for detected anomalies
 
-### Architecture Diagram
+**For detailed system architecture and component interactions, see:** [ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
-```
-┌──────────────┐      HTTP POST      ┌─────────────────┐
-│   Simulator  │ ──────────────────> │  Ingest Service │
-│  (Devices)   │                     │   (FastAPI)     │
-└──────────────┘                     └────────┬────────┘
-                                              │
-                                              │ Publish
-                                              ▼
-                                     ┌────────────────────┐
-                                     │   Redis Streams    │
-                                     │  (Message Queue)   │
-                                     └────────┬───────────┘
-                                              │
-                                              │ Consume (Consumer Groups)
-                                              ▼
-                              ┌───────────────────────────────┐
-                              │    Processor Workers (N)      │
-                              │  • Tumbling Window Aggregator │
-                              │  • Threshold Detector         │
-                              │  • State Management (Redis)   │
-                              └────────┬──────────────────────┘
-                                       │
-                                       │ Alert
-                                       ▼
-                              ┌────────────────────┐
-                              │  Console Alerter   │
-                              └────────────────────┘
-```
+**For design philosophy and architectural decisions, see:** [DESIGN.md](docs/DESIGN.md)
 
 ---
 
@@ -162,153 +162,36 @@ make fix
 
 ---
 
-## Architecture Decisions
+## Architecture & Design
 
-### Why FastAPI?
+This project follows a **design-first methodology** with comprehensive architectural planning. Key architectural decisions include:
 
-**Decision**: Use FastAPI for the ingest HTTP service
+- **Service Isolation**: Ingest and Processor services are self-contained packages
+- **Protocol-Driven Design**: Services depend on abstractions (protocols), not implementations  
+- **Composition Over Inheritance**: Dependencies injected via constructors for testability
+- **Tumbling Windows**: Non-overlapping time windows for metric aggregation
+- **Stream Partitioning**: Consistent hashing for horizontal scaling with data locality
 
-**Rationale**:
-- Modern async/await support for high I/O throughput
-- Built-in request validation with Pydantic
-- Automatic OpenAPI/Swagger documentation
-- High performance (comparable to Node.js and Go)
-- Type hints integration with editor support
+**For detailed architectural decisions and trade-offs, see:** [DESIGN.md](docs/DESIGN.md)
 
-**Trade-offs**:
-- ✅ Fast development with auto-generated docs
-- ✅ Type safety reduces runtime errors
-- ⚠️ Slightly heavier than Flask for simple use cases
+**For complete system architecture and package organization, see:** [ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
-### Why Redis Streams?
+**For development methodology and practices, see:** [METHODOLOGY.md](docs/METHODOLOGY.md)
 
-**Decision**: Use Redis Streams for message queuing and event distribution
-
-**Rationale**:
-- Purpose-built for stream processing workloads
-- Consumer groups provide automatic load balancing
-- Built-in message acknowledgment and redelivery
-- Persistence with AOF/RDB for durability
-- Simpler operational model than Kafka
-
-**Trade-offs**:
-- ✅ Easy to deploy and operate
-- ✅ Lower latency than Kafka for small-medium scale
-- ✅ Single dependency (Redis) for both streaming and state
-- ⚠️ Not designed for petabyte-scale workloads
-- ⚠️ Single point of failure without Redis cluster
-
-### Why Tumbling Windows?
-
-**Decision**: Use non-overlapping tumbling windows for aggregation
-
-**Rationale**:
-- Simple, predictable time boundaries
-- No window state overlap to manage
-- Clear semantics for aggregation periods
-- Sufficient for threshold-based anomaly detection
-
-**Trade-offs**:
-- ✅ Simpler implementation and debugging
-- ✅ Lower memory footprint than sliding windows
-- ⚠️ Less responsive to gradual changes
-- ⚠️ Potential edge effects at window boundaries
-
-### State Management Strategy
-
-**Decision**: Store aggregation state in Redis with TTL
-
-**Rationale**:
-- Co-locate state with the message queue
-- Atomic operations for consistency
-- Automatic cleanup via TTL
-- Supports worker restarts and failover
-
-**Trade-offs**:
-- ✅ Simple architecture (one Redis instance)
-- ✅ Fast state access (in-memory)
-- ⚠️ Limited to Redis memory capacity
-- ⚠️ Not suitable for long-term historical storage
-
-### Threshold-Based Detection
-
-**Decision**: Use static thresholds for anomaly detection
-
-**Rationale**:
-- Transparent and explainable to operators
-- No training data or warm-up period required
-- Predictable behavior and alerts
-- Configurable per metric type
-
-**Trade-offs**:
-- ✅ Simple to understand and debug
-- ✅ Immediate detection capability
-- ✅ Works well for known operational limits
-- ⚠️ Cannot adapt to normal traffic patterns
-- ⚠️ May have false positives/negatives vs. ML approaches
-
----
-
-## Project Structure
-
-```
-.
-├── src/
-│   ├── core/              # Shared domain models and protocols
-│   │   ├── models.py      # TelemetryEvent data model
-│   │   ├── protocols.py   # Interface definitions
-│   │   └── config.py      # Base configuration
-│   │
-│   ├── ingest/            # HTTP ingest service
-│   │   ├── api.py         # FastAPI endpoints
-│   │   ├── service.py     # Business logic
-│   │   ├── models.py      # Request/response models
-│   │   └── main.py        # Application entry point
-│   │
-│   ├── processor/         # Telemetry processor worker
-│   │   ├── worker.py      # Main worker orchestration
-│   │   ├── config.py      # Worker configuration
-│   │   └── main.py        # Worker entry point
-│   │
-│   ├── aggregation/       # Time-windowed aggregation
-│   │   ├── tumbling_window.py  # Tumbling window aggregator
-│   │   ├── window_state.py     # State management
-│   │   └── models.py           # Aggregation models
-│   │
-│   ├── detection/         # Anomaly detection
-│   │   ├── threshold.py   # Threshold-based detector
-│   │   └── models.py      # Detection result models
-│   │
-│   ├── alerts/            # Alert output
-│   │   ├── console.py     # Console alert sink
-│   │   └── models.py      # Alert models
-│   │
-│   ├── consumers/         # Stream consumer infrastructure
-│   │   ├── consumer.py    # Message consumer
-│   │   ├── backpressure.py  # Rate limiting
-│   │   └── error_handler.py # Retry logic
-│   │
-│   ├── streams/           # Stream abstractions
-│   │   └── redis_stream.py  # Redis Streams client
-│   │
-│   └── storage/           # State storage
-│       └── redis_store.py   # Redis storage client
-│
-├── simulator/             # Device simulator
-│   └── main.py           # Telemetry generator
-│
-├── tests/                # Unit tests (pytest)
-├── docker/               # Dockerfiles
-├── config/               # Configuration files
-│
-└── docker-compose.yml    # Multi-container setup
-```
+**For implementation roadmap and requirements tracking, see:** [PROCESS.md](docs/PROCESS.md)
 
 ---
 
 ## Configuration
 
-### Environment Variables
+Configuration is managed through environment variables and Pydantic Settings for type-safe runtime configuration. Each service supports configuration via:
+
+1. Environment variables (highest priority)
+2. `.env` files
+3. YAML config files in `config/`
+4. Default values (lowest priority)
+
+### Key Environment Variables
 
 #### Ingest Service
 ```bash
@@ -335,6 +218,8 @@ SIMULATOR_NUM_DEVICES=5           # Number of devices
 SIMULATOR_INTERVAL_SECONDS=2      # Telemetry interval
 SIMULATOR_ANOMALY_RATE=0.1        # Anomaly probability (10%)
 ```
+
+**For detailed configuration options and examples, see:** [ARCHITECTURE.md](docs/ARCHITECTURE.md#configuration)
 
 ---
 
@@ -465,30 +350,13 @@ For production deployment, consider adding:
 
 ---
 
-## Known Limitations
+## Known Limitations - No high availability; use Redis Cluster in production
+2. **In-Memory State** - Limited by Redis memory; add database for historical data in production
+3. **Static Thresholds** - Cannot adapt to traffic patterns; consider ML-based detection in production
+4. **No Authentication** - Open HTTP endpoints; add API keys, mTLS, or OAuth in production
+5. **Limited Observability** - Console-only alerts; add metrics, tracing, dashboards in production
 
-1. **Single Redis Instance**
-   - No high availability or failover
-   - Single point of failure
-   - **Production**: Use Redis Cluster or Sentinel
-
-2. **In-Memory State**
-   - Limited by Redis memory
-   - No long-term persistence
-   - **Production**: Add database for historical data
-
-3. **Static Thresholds**
-   - Cannot adapt to traffic patterns
-   - May produce false positives
-   - **Production**: Consider ML-based detection
-
-4. **No Authentication**
-   - Open HTTP endpoints
-   - No device authentication
-   - **Production**: Add API keys, mTLS, or OAuth
-
-5. **Limited Observability**
-   - Console-only alerts
+**For complete list of trade-offs and production recommendations, see:** [DESIGN.md](docs/DESIGN.md) and [ARCHITECTURE.md](docs/ARCHITECTURE.md#monitoring-and-observability)
    - Basic logging
    - **Production**: Add metrics, tracing, dashboards
 
@@ -509,12 +377,28 @@ For production deployment, consider adding:
 
 ## Documentation
 
-- **[ASSIGNMENT.md](ASSIGNMENT.md)**: Original assignment requirements
-- **[ARCHITECTURE.md](ARCHITECTURE.md)**: Detailed system architecture
-- **[DESIGN.md](DESIGN.md)**: Design patterns and implementation details
-- **[METHODOLOGY.md](METHODOLOGY.md)**: Development methodology
-- **[PROCESS.md](PROCESS.md)**: Implementation roadmap and decisions
-- **[AI_LOG.md](AI_LOG.md)**: AI tool usage documentation
+This project includes comprehensive documentation organized for different audiences:
+
+### Essential Documents
+
+- **[README.md](README.md)** (this file): Quick start, setup, and overview
+- **[ASSIGNMENT.md](ASSIGNMENT.md)**: Original take-home assignment requirements and specifications
+
+### Technical Documentation (`docs/`)
+
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**: Complete system architecture, package organization, data flow, and deployment patterns
+- **[DESIGN.md](docs/DESIGN.md)**: Design philosophy, architectural decisions, patterns, and trade-offs analysis
+- **[METHODOLOGY.md](docs/METHODOLOGY.md)**: Design-first development methodology and Agile integration practices
+- **[PROCESS.md](docs/PROCESS.md)**: Implementation roadmap, requirements tracking, testing strategy, and success criteria
+- **[AI_LOG.md](docs/AI_LOG.md)**: Complete AI tool usage documentation and interaction history
+
+### Navigation Guide
+
+- **Start Here**: Read this README for quick start and assignment overview
+- **Understand Requirements**: See [ASSIGNMENT.md](ASSIGNMENT.md) for the original challenge
+- **Learn Architecture**: Refer to [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design
+- **Explore Design Decisions**: Review [docs/DESIGN.md](docs/DESIGN.md) for rationale and trade-offs
+- **Full Documentation Index**: See [docs/README.md](docs/README.md) for complete documentation guide
 
 ---
 
@@ -524,8 +408,14 @@ This is a take-home assignment project for demonstration purposes.
 
 ---
 
-## Author
+This project includes comprehensive documentation:
 
-Tyler Bruno - Take-Home Assignment Submission
+- **[README.md](README.md)** (this file): Quick start, setup, and overview
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**: Detailed system architecture, package organization, data flow, and deployment
+- **[DESIGN.md](docs/DESIGN.md)**: Design philosophy, architectural decisions, patterns, and trade-offs  
+- **[METHODOLOGY.md](docs/METHODOLOGY.md)**: Design-first development methodology and Agile practices
+- **[PROCESS.md](docs/PROCESS.md)**: Implementation roadmap, requirements tracking, and success criteria
+- **[AI_LOG.md](docs/AI_LOG.md)**: Complete AI tool usage documentation and interactions
+- **[ASSIGNMENT.md](ASSIGNMENT.md)**: Original assignment requirements
 
-**Submission Date**: December 13, 2025
+**Start Here**: Read README.md for quick start, then refer to [ARCHITECTURE.md](docs/ARCHITECTURE.md) and [DESIGN.md](docs/DESIGN.md) for deeper understanding.
