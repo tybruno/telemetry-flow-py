@@ -255,6 +255,9 @@ class TestProcessorIntegration:
             size_seconds=60.0,
         )
         window_metrics = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=95.0,  # Exceeds threshold
             minimum=90.0,

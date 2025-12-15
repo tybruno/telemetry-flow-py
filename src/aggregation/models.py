@@ -40,10 +40,13 @@ class WindowBounds:
 class WindowMetrics:
     """Statistical aggregation results for a time window.
 
-    Generic container for aggregated metrics including statistical measures.
-    Domain-agnostic design works with any numeric metric stream.
+    Container for aggregated metrics including statistical measures and
+    device context for metric-specific anomaly detection.
 
     Attributes:
+        device_id: Device identifier for this metric
+        interface: Interface name for this metric
+        metric_name: Name of the metric being aggregated
         window_bounds: Timestamp boundaries of this window
         average: Mean value of all metrics in window
         minimum: Lowest value in window
@@ -54,6 +57,9 @@ class WindowMetrics:
 
     Example:
         metrics = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=85.5,
             minimum=75.0,
@@ -63,6 +69,9 @@ class WindowMetrics:
             sum=10260.0
         )
     """
+    device_id: str
+    interface: str
+    metric_name: str
     window_bounds: WindowBounds
     average: float
     minimum: float

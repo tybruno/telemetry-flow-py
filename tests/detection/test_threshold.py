@@ -53,6 +53,9 @@ class TestThresholdDetector:
             size_seconds=60.0
         )
         metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=75.0,
             minimum=50.0,
@@ -112,6 +115,9 @@ class TestThresholdDetector:
             size_seconds=60.0
         )
         high_metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=95.0,  # Exceeds 80.0 default threshold
             minimum=90.0,
@@ -138,8 +144,11 @@ class TestThresholdDetector:
             end=datetime(2025, 12, 12, 10, 1, 0, tzinfo=timezone.utc),
             size_seconds=60.0
         )
-        # 95.0 vs 80.0 threshold = 18.75% over = medium severity
-        medium_metric = WindowMetrics(
+        # 95.0 vs 90.0 threshold (cpu_utilization in detector fixture) = 5.56% over = low severity
+        low_metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=95.0,
             minimum=90.0,
@@ -149,9 +158,9 @@ class TestThresholdDetector:
             sum=950.0
         )
 
-        result = detector.create_anomaly_result(medium_metric)
-        assert result.severity.value == "medium"
-        assert result.confidence == 0.85  # From _calculate_severity for 0.1 < ratio <= 0.25
+        result = detector.create_anomaly_result(low_metric)
+        assert result.severity.value == "low"
+        assert result.confidence == 0.75  # From _calculate_severity for ratio <= 0.1
 
     def test_confidence_calculation(self, detector: ThresholdDetector) -> None:
         """Test detector calculates confidence score.
@@ -168,6 +177,9 @@ class TestThresholdDetector:
             size_seconds=60.0
         )
         high_metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=95.0,
             minimum=90.0,
@@ -228,6 +240,9 @@ class TestThresholdDetector:
             size_seconds=60.0
         )
         metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=75.0,
             minimum=50.0,

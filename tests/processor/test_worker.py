@@ -208,6 +208,9 @@ class TestTelemetryWorker:
             size_seconds=60.0,
         )
         window_metrics = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=85.0,
             minimum=80.0,
@@ -266,6 +269,9 @@ class TestTelemetryWorker:
             size_seconds=60.0,
         )
         window_metrics = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=95.0,
             minimum=90.0,
@@ -432,6 +438,9 @@ class TestTelemetryWorker:
             size_seconds=60.0,
         )
         window_metrics = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=75.0,
             minimum=70.0,
@@ -484,6 +493,9 @@ class TestTelemetryWorker:
             size_seconds=60.0,
         )
         window_metrics = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=95.0,
             minimum=90.0,

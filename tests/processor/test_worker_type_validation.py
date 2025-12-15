@@ -121,6 +121,9 @@ class TestTelemetryWorkerTypeValidation:
             size_seconds=60.0,
         )
         metrics = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=95.0,
             minimum=90.0,

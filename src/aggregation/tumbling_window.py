@@ -250,9 +250,12 @@ class TumblingWindowAggregator(BaseAggregator):
         """
         values = self._extract_window_values(window)
         stats = self._calculate_statistics(values, window)
-        bounds = self._create_window_bounds(window)
+        bounds, device_id, interface, metric_name = self._create_window_bounds(window, window_key)
 
         metrics = WindowMetrics(
+            device_id=device_id,
+            interface=interface,
+            metric_name=metric_name,
             window_bounds=bounds,
             average=stats["average"],
             minimum=stats["minimum"],
@@ -349,15 +352,17 @@ class TumblingWindowAggregator(BaseAggregator):
 
     def _create_window_bounds(
         self,
-        window: dict[str, object]
-    ) -> WindowBounds:
-        """Create window bounds from window state.
+        window: dict[str, object],
+        window_key: tuple[str, str, str]
+    ) -> tuple[WindowBounds, str, str, str]:
+        """Create window bounds and extract context from window state.
 
         Args:
             window: Window state dictionary.
+            window_key: Window identifier (device_id, interface, metric_name).
 
         Returns:
-            WindowBounds object.
+            Tuple of (WindowBounds, device_id, interface, metric_name).
         """
         from datetime import datetime
 
@@ -372,7 +377,10 @@ class TumblingWindowAggregator(BaseAggregator):
             end=end,
             size_seconds=float(self._window_size)
         )
-        return bounds
+        
+        device_id, interface, metric_name = window_key
+        
+        return bounds, device_id, interface, metric_name
 
     def _log_window_completion(
         self,

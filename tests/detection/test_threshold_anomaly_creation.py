@@ -46,6 +46,9 @@ class TestThresholdDetectorAnomalyCreation:
         """
         # Metric with average 75.0, below threshold 80.0
         metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=75.0,
             minimum=70.0,
@@ -71,6 +74,9 @@ class TestThresholdDetectorAnomalyCreation:
         """
         # average=140, threshold=80, excess_ratio=(140-80)/80 = 0.75 > 0.5
         metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=140.0,
             minimum=130.0,
@@ -97,6 +103,9 @@ class TestThresholdDetectorAnomalyCreation:
         """
         # average=110, threshold=80, excess_ratio=(110-80)/80 = 0.375
         metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=110.0,
             minimum=105.0,
@@ -123,6 +132,9 @@ class TestThresholdDetectorAnomalyCreation:
         """
         # average=95, threshold=80, excess_ratio=(95-80)/80 = 0.1875
         metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=95.0,
             minimum=90.0,
@@ -149,6 +161,9 @@ class TestThresholdDetectorAnomalyCreation:
         """
         # average=85, threshold=80, excess_ratio=(85-80)/80 = 0.0625
         metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=85.0,
             minimum=82.0,

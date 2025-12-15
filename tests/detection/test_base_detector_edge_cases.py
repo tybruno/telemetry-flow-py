@@ -56,6 +56,9 @@ class TestBaseDetectorValidation:
             bounds: WindowBounds fixture.
         """
         metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=math.inf,
             minimum=70.0,
@@ -80,6 +83,9 @@ class TestBaseDetectorValidation:
             bounds: WindowBounds fixture.
         """
         metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=math.nan,
             minimum=70.0,
@@ -104,6 +110,9 @@ class TestBaseDetectorValidation:
             bounds: WindowBounds fixture.
         """
         metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=80.0,
             minimum=70.0,
@@ -128,6 +137,9 @@ class TestBaseDetectorValidation:
             bounds: WindowBounds fixture.
         """
         metric = WindowMetrics(
+            device_id="router-01",
+            interface="eth0",
+            metric_name="cpu_utilization",
             window_bounds=bounds,
             average=80.0,
             minimum=70.0,

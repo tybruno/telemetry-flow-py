@@ -119,8 +119,8 @@ class ThresholdDetector(BaseDetector):
     def is_anomaly(self, metric: WindowMetrics) -> bool:
         """Check if aggregated metric exceeds threshold.
 
-        Compares metric value against configured threshold for that metric
-        type, or default threshold if not configured.
+        Compares metric value against configured threshold for that specific
+        metric type, or default threshold if not configured.
 
         Args:
             metric: Aggregated metric to check.
@@ -133,10 +133,8 @@ class ThresholdDetector(BaseDetector):
         """
         self._validate_metric(metric)
 
-        # Get threshold for this metric (use default if not configured)
-        # Note: In a real implementation, we'd need access to metric_name
-        # For now, using average against default threshold
-        threshold = self._default_threshold
+        # Get metric-specific threshold or fall back to default
+        threshold = self._thresholds.get(metric.metric_name, self._default_threshold)
 
         is_above_threshold = metric.average > threshold
         return is_above_threshold
@@ -161,7 +159,8 @@ class ThresholdDetector(BaseDetector):
         """
         self._validate_metric(metric)
 
-        threshold = self._default_threshold
+        # Get metric-specific threshold or fall back to default
+        threshold = self._thresholds.get(metric.metric_name, self._default_threshold)
         actual_value = metric.average
 
         self._validate_is_anomaly(actual_value, threshold)
