@@ -15,14 +15,16 @@ class TestRunWorker:
     @pytest.mark.asyncio
     async def test_run_worker_initializes_components(self) -> None:
         """Test that run_worker initializes all components."""
-        with patch.object(processor_main, "ProcessorConfig") as mock_config_class, \
-             patch.object(processor_main, "RedisStream") as mock_stream_class, \
-             patch.object(processor_main, "TelemetryConsumer") as mock_consumer_class, \
-             patch.object(processor_main, "TumblingWindowAggregator") as mock_agg_class, \
-             patch.object(processor_main, "ThresholdDetector") as mock_detector_class, \
-             patch.object(processor_main, "RedisStore") as mock_store_class, \
-             patch.object(processor_main, "ConsoleAlerter") as mock_alerter_class, \
-             patch.object(processor_main, "TelemetryWorker") as mock_worker_class:
+        with (
+            patch.object(processor_main, "ProcessorConfig") as mock_config_class,
+            patch.object(processor_main, "RedisStream") as mock_stream_class,
+            patch.object(processor_main, "TelemetryConsumer") as mock_consumer_class,
+            patch.object(processor_main, "TumblingWindowAggregator") as mock_agg_class,
+            patch.object(processor_main, "ThresholdDetector") as mock_detector_class,
+            patch.object(processor_main, "RedisStore") as mock_store_class,
+            patch.object(processor_main, "ConsoleAlerter") as mock_alerter_class,
+            patch.object(processor_main, "TelemetryWorker") as mock_worker_class,
+        ):
             # Setup mock config
             mock_config = MagicMock()
             mock_config.window_size_seconds = 60
@@ -68,14 +70,16 @@ class TestRunWorker:
     @pytest.mark.asyncio
     async def test_run_worker_creates_consumer_group(self) -> None:
         """Test that run_worker creates consumer group."""
-        with patch.object(processor_main, "ProcessorConfig") as mock_config_class, \
-             patch.object(processor_main, "RedisStream") as mock_stream_class, \
-             patch.object(processor_main, "TelemetryConsumer"), \
-             patch.object(processor_main, "TumblingWindowAggregator"), \
-             patch.object(processor_main, "ThresholdDetector"), \
-             patch.object(processor_main, "RedisStore") as mock_store_class, \
-             patch.object(processor_main, "ConsoleAlerter"), \
-             patch.object(processor_main, "TelemetryWorker") as mock_worker_class:
+        with (
+            patch.object(processor_main, "ProcessorConfig") as mock_config_class,
+            patch.object(processor_main, "RedisStream") as mock_stream_class,
+            patch.object(processor_main, "TelemetryConsumer"),
+            patch.object(processor_main, "TumblingWindowAggregator"),
+            patch.object(processor_main, "ThresholdDetector"),
+            patch.object(processor_main, "RedisStore") as mock_store_class,
+            patch.object(processor_main, "ConsoleAlerter"),
+            patch.object(processor_main, "TelemetryWorker") as mock_worker_class,
+        ):
             mock_config = MagicMock()
             mock_config.get_stream_name.return_value = "telemetry"
             mock_config.consumer_group = "processors"
@@ -112,14 +116,16 @@ class TestRunWorker:
     @pytest.mark.asyncio
     async def test_run_worker_cleans_up_on_error(self) -> None:
         """Test that run_worker cleans up resources on error."""
-        with patch.object(processor_main, "ProcessorConfig") as mock_config_class, \
-             patch.object(processor_main, "RedisStream") as mock_stream_class, \
-             patch.object(processor_main, "TelemetryConsumer"), \
-             patch.object(processor_main, "TumblingWindowAggregator"), \
-             patch.object(processor_main, "ThresholdDetector"), \
-             patch.object(processor_main, "RedisStore") as mock_store_class, \
-             patch.object(processor_main, "ConsoleAlerter"), \
-             patch.object(processor_main, "TelemetryWorker") as mock_worker_class:
+        with (
+            patch.object(processor_main, "ProcessorConfig") as mock_config_class,
+            patch.object(processor_main, "RedisStream") as mock_stream_class,
+            patch.object(processor_main, "TelemetryConsumer"),
+            patch.object(processor_main, "TumblingWindowAggregator"),
+            patch.object(processor_main, "ThresholdDetector"),
+            patch.object(processor_main, "RedisStore") as mock_store_class,
+            patch.object(processor_main, "ConsoleAlerter"),
+            patch.object(processor_main, "TelemetryWorker") as mock_worker_class,
+        ):
             mock_config = MagicMock()
             mock_config.get_stream_name.return_value = "telemetry"
             mock_config.consumer_group = "processors"
@@ -160,8 +166,10 @@ class TestMain:
 
     def test_main_returns_zero_on_success(self) -> None:
         """Test main returns 0 on successful execution."""
-        with patch.object(processor_main, "ProcessorConfig") as mock_config_class, \
-             patch.object(processor_main, "asyncio") as mock_asyncio:
+        with (
+            patch.object(processor_main, "ProcessorConfig") as mock_config_class,
+            patch.object(processor_main, "asyncio") as mock_asyncio,
+        ):
             mock_config = MagicMock()
             mock_config.validate_config = MagicMock()
             mock_config_class.return_value = mock_config
@@ -184,8 +192,10 @@ class TestMain:
 
     def test_main_returns_two_on_connection_error(self) -> None:
         """Test main returns 2 on connection error."""
-        with patch.object(processor_main, "ProcessorConfig") as mock_config_class, \
-             patch.object(processor_main, "asyncio") as mock_asyncio:
+        with (
+            patch.object(processor_main, "ProcessorConfig") as mock_config_class,
+            patch.object(processor_main, "asyncio") as mock_asyncio,
+        ):
             mock_config = MagicMock()
             mock_config.validate_config = MagicMock()
             mock_config_class.return_value = mock_config
@@ -198,8 +208,10 @@ class TestMain:
 
     def test_main_returns_zero_on_keyboard_interrupt(self) -> None:
         """Test main returns 0 on keyboard interrupt."""
-        with patch.object(processor_main, "ProcessorConfig") as mock_config_class, \
-             patch.object(processor_main, "asyncio") as mock_asyncio:
+        with (
+            patch.object(processor_main, "ProcessorConfig") as mock_config_class,
+            patch.object(processor_main, "asyncio") as mock_asyncio,
+        ):
             mock_config = MagicMock()
             mock_config.validate_config = MagicMock()
             mock_config_class.return_value = mock_config
@@ -212,8 +224,10 @@ class TestMain:
 
     def test_main_returns_three_on_general_error(self) -> None:
         """Test main returns 3 on general processing error."""
-        with patch.object(processor_main, "ProcessorConfig") as mock_config_class, \
-             patch.object(processor_main, "asyncio") as mock_asyncio:
+        with (
+            patch.object(processor_main, "ProcessorConfig") as mock_config_class,
+            patch.object(processor_main, "asyncio") as mock_asyncio,
+        ):
             mock_config = MagicMock()
             mock_config.validate_config = MagicMock()
             mock_config_class.return_value = mock_config
@@ -226,9 +240,11 @@ class TestMain:
 
     def test_main_configures_logging(self) -> None:
         """Test main configures logging."""
-        with patch.object(processor_main, "ProcessorConfig") as mock_config_class, \
-             patch.object(processor_main, "asyncio"), \
-             patch.object(processor_main, "_log") as mock_log:
+        with (
+            patch.object(processor_main, "ProcessorConfig") as mock_config_class,
+            patch.object(processor_main, "asyncio"),
+            patch.object(processor_main, "_log") as mock_log,
+        ):
             mock_config = MagicMock()
             mock_config.validate_config = MagicMock()
             mock_config_class.return_value = mock_config
