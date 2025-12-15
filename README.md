@@ -5,6 +5,7 @@ A distributed system for processing network telemetry data in real-time, perform
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Type checked: mypy](https://img.shields.io/badge/type%20checked-mypy-blue.svg)](http://mypy-lang.org/)
+[![Test Coverage: 97%](https://img.shields.io/badge/coverage-97%25-brightgreen.svg)](htmlcov/index.html)
 
 ---
 
@@ -29,9 +30,9 @@ This project was developed entirely using **AI-assisted development** with GitHu
 - ✅ Threshold-based anomaly detection with alerts
 - ✅ Dynamic configuration and backpressure management
 - ✅ Docker Compose orchestration with device simulator
-- ✅ Comprehensive testing (409 tests, 82% coverage)
-   - 399 unit tests (fast, no external dependencies)
-   - 10 integration tests (Redis-based, require Docker)
+- ✅ Comprehensive testing (544 tests, 97% coverage)
+   - 539 unit tests (fast, no external dependencies)
+   - 5 integration tests (Redis-based, require Docker)
 
 **For complete assignment details and original requirements, see:** [ASSIGNMENT.md](ASSIGNMENT.md)
 
@@ -155,14 +156,14 @@ make fix
    - Adjustable anomaly rate and interval
 
 3. **Comprehensive Testing**
-   - **409 total tests** across all modules (100% passing)
-   - **82% code coverage** with detailed HTML reports
-   - **Unit tests** (399 tests) - Fast, isolated, no external dependencies
-   - **Integration tests** (10 tests) - Real Redis interactions, Docker-based
+   - **544 total tests** across all modules (539 passing)
+   - **97% code coverage** with detailed HTML reports
+   - **Unit tests** (539+ tests) - Fast, isolated, no external dependencies
+   - **Integration tests** (5 tests) - Real Redis interactions, Docker-based
    - Pytest with async support and pytest-asyncio
    - Mock-based testing for external dependencies
-   - Simulator tests with 98% coverage
-   - Full coverage of exceptions, models, and core business logic
+   - 100% coverage on core modules (redis_stream, storage, aggregation, detection)
+   - Comprehensive edge case and error scenario testing
    - Custom pytest markers for test categorization
 
 4. **CI/CD Pipeline**
@@ -278,7 +279,7 @@ GET /health
 
 ## Testing
 
-The project includes comprehensive testing with both unit and integration tests.
+The project includes **544 comprehensive tests** with **97% code coverage**, combining both unit and integration tests.
 
 ### Quick Testing Commands
 
@@ -289,152 +290,34 @@ make test
 # Run unit tests only (fast, no Docker required)
 make test-unit
 
-# Run integration tests (requires Docker/Redis)
-make test-integration
-
 # Run tests with coverage report
 make test-cov
 
-# Run integration tests with coverage
-make test-integration-cov
-
 # Generate HTML coverage report
 make test-cov-html
-# Open htmlcov/index.html in browser
 ```
 
-### Test Organization
+For detailed testing information including Docker setup, test organization, running specific tests, and more:
 
-**Unit Tests** (399 tests)
-- Fast execution (< 10 seconds)
-- No external dependencies
-- Mock-based testing
-- Location: `tests/` (all except integration tests)
-
-**Integration Tests** (10 tests)
-- Require Docker and Redis
-- Test real Redis interactions
-- Processor integration: `tests/processor/test_integration.py` (5 tests)
-- Storage integration: `tests/storage/test_redis_integration.py` (5 tests)
-
-### Running Specific Tests
-
-```bash
-# Run specific test file
-pytest tests/aggregation/test_tumbling_window.py -v
-
-# Run tests matching pattern
-pytest tests/ -k "window" -v
-
-# Run only integration tests
-pytest -m integration -v
-
-# Run excluding integration tests
-pytest -m "not integration" -v
-```
-
-### Docker Requirements for Integration Tests
-
-Integration tests require Redis to be running. The Makefile automatically checks for this:
-
-```bash
-# Start Redis (required for integration tests)
-make docker-up
-
-# Run integration tests
-make test-integration
-
-# Stop services when done
-make docker-down
-```
+**See [CONTRIBUTING.md](CONTRIBUTING.md#testing) for comprehensive testing guide.**
 
 ---
 
 ## Development
 
-### Makefile Commands
+For comprehensive development guidance including code quality standards, testing requirements, adding new features, and publishing to PyPI:
 
-The project includes a comprehensive Makefile for common development tasks:
+**See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete development guide.**
 
-```bash
-# Installation
-make install          # Install production dependencies
-make install-dev      # Install with development dependencies
-
-# Testing
-make test             # Run all tests
-make test-unit        # Run unit tests only (no Docker)
-make test-integration # Run integration tests (requires Docker)
-make test-cov         # Run tests with coverage report
-make test-integration-cov  # Run integration tests with coverage
-make coverage         # Generate HTML coverage report
-
-# Code Quality
-make lint            # Check code with ruff linter
-make format          # Check code formatting
-make fix             # Auto-fix linting and formatting issues
-make typecheck       # Run mypy type checker
-make check           # Run all checks (lint + format + typecheck)
-
-# Docker
-make docker-up       # Start all Docker services
-make docker-down     # Stop and remove services
-make docker-logs     # View service logs
-make docker-restart  # Restart all services
-make docker-clean    # Stop services and remove volumes
-
-# Combined
-make all             # Run all checks and tests with coverage
-make clean           # Remove build artifacts and cache files
-```
-
-### Code Quality
+### Quick Reference
 
 ```bash
-# Run all checks (lint + format + typecheck)
-make check
-
-# Auto-fix linting issues
-make fix
-
-# Type checking only
-make typecheck
+make check        # Run all checks (lint + format + typecheck)
+make test         # Run all tests with coverage
+make fix          # Auto-fix linting issues
+make docker-up    # Start Docker services
+make all          # Run all checks and tests
 ```
-
-### Adding New Features
-
-1. **Add tests first** (TDD approach)
-2. **Implement feature** following existing patterns
-3. **Update documentation** (docstrings, README, ARCHITECTURE.md)
-4. **Run checks**: `make check && make test-cov`
-5. **Commit with descriptive message**
-
-### Publishing to PyPI
-
-The project includes automated PyPI publishing via GitHub Actions:
-
-**Creating a Release:**
-```bash
-# Tag the release
-git tag -a v0.1.0 -m "Release version 0.1.0"
-git push origin v0.1.0
-
-# Or create a release through GitHub UI
-# This automatically triggers the publish workflow
-```
-
-**Release Process:**
-1. **Create GitHub Release** with version tag (e.g., `v0.1.0`)
-2. **Automated Build** - GitHub Actions builds package distributions
-3. **Publish to PyPI** - Package automatically published using OIDC trusted publishing
-4. **Pre-releases** - Marked as pre-release publishes to TestPyPI instead
-
-**Installation from PyPI** (after publishing):
-```bash
-pip install telemetry-flow-py
-```
-
-**For detailed CI/CD configuration, see:** [docs/METHODOLOGY.md](docs/METHODOLOGY.md#phase-4-development-infrastructure)
 
 ---
 
@@ -506,26 +389,15 @@ For production deployment, consider adding:
 
 This project includes comprehensive documentation organized for different audiences:
 
-### Essential Documents
-
-- **[README.md](README.md)** (this file): Quick start, setup, and overview
-- **[ASSIGNMENT.md](ASSIGNMENT.md)**: Original take-home assignment requirements and specifications
-
-### Technical Documentation (`docs/`)
-
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**: Complete system architecture, package organization, data flow, and deployment patterns
-- **[DESIGN.md](docs/DESIGN.md)**: Design philosophy, architectural decisions, patterns, and trade-offs analysis
-- **[METHODOLOGY.md](docs/METHODOLOGY.md)**: Design-first development methodology and Agile integration practices
-- **[PROCESS.md](docs/PROCESS.md)**: Implementation roadmap, requirements tracking, testing strategy, and success criteria
-- **[AI_LOG.md](docs/AI_LOG.md)**: Complete AI tool usage documentation and interaction history
-
-### Navigation Guide
-
-- **Start Here**: Read this README for quick start and assignment overview
-- **Understand Requirements**: See [ASSIGNMENT.md](ASSIGNMENT.md) for the original challenge
-- **Learn Architecture**: Refer to [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design
-- **Explore Design Decisions**: Review [docs/DESIGN.md](docs/DESIGN.md) for rationale and trade-offs
-- **Full Documentation Index**: See [docs/README.md](docs/README.md) for complete documentation guide
+- **[README.md](README.md)** (this file): Quick start and overview
+- **[CONTRIBUTING.md](CONTRIBUTING.md)**: Development setup, code quality standards, testing, and contributing guidelines
+- **[ASSIGNMENT.md](ASSIGNMENT.md)**: Original take-home assignment requirements
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**: System architecture, data flow, and deployment
+- **[DESIGN.md](docs/DESIGN.md)**: Design decisions and trade-offs
+- **[METHODOLOGY.md](docs/METHODOLOGY.md)**: Development methodology and practices
+- **[PROCESS.md](docs/PROCESS.md)**: Implementation roadmap and success criteria
+- **[AI_LOG.md](docs/AI_LOG.md)**: AI tool usage and interaction history
+- **[docs/README.md](docs/README.md)**: Complete documentation index
 
 ---
 
