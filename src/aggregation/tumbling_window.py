@@ -210,23 +210,28 @@ class TumblingWindowAggregator(BaseAggregator):
             event: Event to accumulate.
         """
         values = window["values"]
-        assert isinstance(values, list)
+        if not isinstance(values, list):
+            raise TypeError(f"Expected list for values, got {type(values).__name__}")
         values.append(event.metric_value)
 
         current_sum = window["sum"]
-        assert isinstance(current_sum, (int, float))
+        if not isinstance(current_sum, (int, float)):
+            raise TypeError(f"Invalid sum type: {type(current_sum).__name__}")
         window["sum"] = current_sum + event.metric_value
 
         current_count = window["count"]
-        assert isinstance(current_count, int)
+        if not isinstance(current_count, int):
+            raise TypeError(f"Invalid count type: {type(current_count).__name__}")
         window["count"] = current_count + 1
 
         current_min = window["min"]
-        assert isinstance(current_min, (int, float))
+        if not isinstance(current_min, (int, float)):
+            raise TypeError(f"Invalid min type: {type(current_min).__name__}")
         window["min"] = min(current_min, event.metric_value)
 
         current_max = window["max"]
-        assert isinstance(current_max, (int, float))
+        if not isinstance(current_max, (int, float)):
+            raise TypeError(f"Invalid max type: {type(current_max).__name__}")
         window["max"] = max(current_max, event.metric_value)
 
     def _finalize_window(
@@ -278,7 +283,8 @@ class TumblingWindowAggregator(BaseAggregator):
             List of metric values.
         """
         values = window["values"]
-        assert isinstance(values, list)
+        if not isinstance(values, list):
+            raise TypeError(f"Expected list for values, got {type(values).__name__}")
         return values
 
     def _calculate_statistics(
@@ -294,16 +300,20 @@ class TumblingWindowAggregator(BaseAggregator):
             Dictionary with calculated statistics.
         """
         count = window["count"]
-        assert isinstance(count, int)
+        if not isinstance(count, int):
+            raise TypeError(f"Expected int for count, got {type(count).__name__}")
 
         total_sum = window["sum"]
-        assert isinstance(total_sum, (int, float))
+        if not isinstance(total_sum, (int, float)):
+            raise TypeError(f"Invalid sum type: {type(total_sum).__name__}")
 
         minimum = window["min"]
-        assert isinstance(minimum, (int, float))
+        if not isinstance(minimum, (int, float)):
+            raise TypeError(f"Expected int/float for min, got {type(minimum).__name__}")
 
         maximum = window["max"]
-        assert isinstance(maximum, (int, float))
+        if not isinstance(maximum, (int, float)):
+            raise TypeError(f"Expected int/float for max, got {type(maximum).__name__}")
 
         average = total_sum / count
         stddev = self._calculate_stddev(values, average, count)
@@ -354,8 +364,10 @@ class TumblingWindowAggregator(BaseAggregator):
         start = window["start"]
         end = window["end"]
 
-        assert isinstance(start, datetime)
-        assert isinstance(end, datetime)
+        if not isinstance(start, datetime):
+            raise TypeError(f"Expected datetime for start, got {type(start).__name__}")
+        if not isinstance(end, datetime):
+            raise TypeError(f"Expected datetime for end, got {type(end).__name__}")
 
         bounds = WindowBounds(
             start=start, end=end, size_seconds=float(self._window_size)

@@ -29,7 +29,9 @@ This project was developed entirely using **AI-assisted development** with GitHu
 - ✅ Threshold-based anomaly detection with alerts
 - ✅ Dynamic configuration and backpressure management
 - ✅ Docker Compose orchestration with device simulator
-- ✅ Comprehensive testing (360 tests, 71% coverage)
+- ✅ Comprehensive testing (409 tests, 82% coverage)
+   - 399 unit tests (fast, no external dependencies)
+   - 10 integration tests (Redis-based, require Docker)
 
 **For complete assignment details and original requirements, see:** [ASSIGNMENT.md](ASSIGNMENT.md)
 
@@ -152,13 +154,16 @@ make fix
    - Realistic metric patterns with occasional anomalies
    - Adjustable anomaly rate and interval
 
-3. **Comprehensive Unit Tests**
-   - 325 passing tests across all modules
-   - 74% code coverage
-   - Pytest with async support
+3. **Comprehensive Testing**
+   - **409 total tests** across all modules (100% passing)
+   - **82% code coverage** with detailed HTML reports
+   - **Unit tests** (399 tests) - Fast, isolated, no external dependencies
+   - **Integration tests** (10 tests) - Real Redis interactions, Docker-based
+   - Pytest with async support and pytest-asyncio
    - Mock-based testing for external dependencies
    - Simulator tests with 98% coverage
    - Full coverage of exceptions, models, and core business logic
+   - Custom pytest markers for test categorization
 
 4. **CI/CD Pipeline**
    - Automated testing across Python 3.10, 3.11, 3.12
@@ -273,27 +278,115 @@ GET /health
 
 ## Testing
 
+The project includes comprehensive testing with both unit and integration tests.
+
+### Quick Testing Commands
+
 ```bash
-# Run all tests
+# Run all tests (unit + integration)
 make test
 
-# Run with coverage
+# Run unit tests only (fast, no Docker required)
+make test-unit
+
+# Run integration tests (requires Docker/Redis)
+make test-integration
+
+# Run tests with coverage report
 make test-cov
+
+# Run integration tests with coverage
+make test-integration-cov
 
 # Generate HTML coverage report
 make test-cov-html
 # Open htmlcov/index.html in browser
+```
 
+### Test Organization
+
+**Unit Tests** (399 tests)
+- Fast execution (< 10 seconds)
+- No external dependencies
+- Mock-based testing
+- Location: `tests/` (all except integration tests)
+
+**Integration Tests** (10 tests)
+- Require Docker and Redis
+- Test real Redis interactions
+- Processor integration: `tests/processor/test_integration.py` (5 tests)
+- Storage integration: `tests/storage/test_redis_integration.py` (5 tests)
+
+### Running Specific Tests
+
+```bash
 # Run specific test file
 pytest tests/aggregation/test_tumbling_window.py -v
 
 # Run tests matching pattern
 pytest tests/ -k "window" -v
+
+# Run only integration tests
+pytest -m integration -v
+
+# Run excluding integration tests
+pytest -m "not integration" -v
+```
+
+### Docker Requirements for Integration Tests
+
+Integration tests require Redis to be running. The Makefile automatically checks for this:
+
+```bash
+# Start Redis (required for integration tests)
+make docker-up
+
+# Run integration tests
+make test-integration
+
+# Stop services when done
+make docker-down
 ```
 
 ---
 
 ## Development
+
+### Makefile Commands
+
+The project includes a comprehensive Makefile for common development tasks:
+
+```bash
+# Installation
+make install          # Install production dependencies
+make install-dev      # Install with development dependencies
+
+# Testing
+make test             # Run all tests
+make test-unit        # Run unit tests only (no Docker)
+make test-integration # Run integration tests (requires Docker)
+make test-cov         # Run tests with coverage report
+make test-integration-cov  # Run integration tests with coverage
+make coverage         # Generate HTML coverage report
+
+# Code Quality
+make lint            # Check code with ruff linter
+make format          # Check code formatting
+make fix             # Auto-fix linting and formatting issues
+make typecheck       # Run mypy type checker
+make check           # Run all checks (lint + format + typecheck)
+
+# Docker
+make docker-up       # Start all Docker services
+make docker-down     # Stop and remove services
+make docker-logs     # View service logs
+make docker-restart  # Restart all services
+make docker-clean    # Stop services and remove volumes
+
+# Combined
+make all             # Run all checks and tests with coverage
+make clean           # Remove build artifacts and cache files
+```
 
 ### Code Quality
 
