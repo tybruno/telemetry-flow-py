@@ -63,15 +63,28 @@ def setup_logging(*, log_level: str = "INFO") -> None:
     # Get numeric level
     numeric_level = getattr(logging, normalized_level)
 
-    # Configure root logger
-    logging.basicConfig(
-        level=numeric_level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        handlers=[
-            logging.StreamHandler(sys.stdout)
-        ]
-    )
+    # Set root logger level
+    logging.root.setLevel(numeric_level)
+
+    # Create or update handler
+    if not logging.root.handlers:
+        handler = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter(
+            fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+        handler.setFormatter(formatter)
+        logging.root.addHandler(handler)
+    else:
+        # Update existing handlers
+        for handler in logging.root.handlers:
+            if isinstance(handler, logging.StreamHandler):
+                if not handler.formatter:
+                    formatter = logging.Formatter(
+                        fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                        datefmt="%Y-%m-%d %H:%M:%S",
+                    )
+                    handler.setFormatter(formatter)
 
     # Set level for all existing loggers
     for logger_name in logging.root.manager.loggerDict:
