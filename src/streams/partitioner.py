@@ -44,11 +44,11 @@ class StreamPartitioner:
     _num_partitions: int
     _base_stream_name: str
 
-    def __init__(self, *, num_partitions: int, base_stream_name: str = "telemetry") -> None:
+    def __init__(self, *, num_partitions: int = 3, base_stream_name: str = "telemetry") -> None:
         """Initialize stream partitioner.
 
         Args:
-            num_partitions: Total number of partitions (must be > 0).
+            num_partitions: Total number of partitions (must be > 0, default: 3).
             base_stream_name: Base name for partitioned streams.
 
         Raises:
@@ -60,7 +60,7 @@ class StreamPartitioner:
         if num_partitions <= 0:
             error_message = "num_partitions must be positive: %d"
             _log.error(error_message, num_partitions)
-            raise ValueError(f"Invalid num_partitions: {num_partitions}") from None
+            raise ValueError("num_partitions must be positive") from None
 
         self._num_partitions = num_partitions
         self._base_stream_name = base_stream_name
@@ -70,6 +70,18 @@ class StreamPartitioner:
             num_partitions,
             base_stream_name,
         )
+    
+    def __repr__(self) -> str:
+        """Return string representation.
+        
+        Returns:
+            String representation showing partitions and base name.
+        """
+        representation = (
+            f"StreamPartitioner(num_partitions={self._num_partitions}, "
+            f"base_stream_name={self._base_stream_name!r})"
+        )
+        return representation
 
     def get_partition(self, device_id: str) -> int:
         """Get partition number for device_id.
