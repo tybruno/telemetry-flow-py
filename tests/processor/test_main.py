@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.processor.main import main, run_worker
+import src.processor.main as processor_main
 
 
 class TestRunWorker:
@@ -52,7 +52,7 @@ class TestRunWorker:
             mock_worker_class.return_value = mock_worker
 
             # Run the worker
-            await run_worker()
+            await processor_main.run_worker()
 
             # Verify initialization
             mock_stream_class.assert_called_once()
@@ -100,7 +100,7 @@ class TestRunWorker:
             mock_worker.stop = AsyncMock()
             mock_worker_class.return_value = mock_worker
 
-            await run_worker()
+            await processor_main.run_worker()
 
             # Verify consumer group creation
             mock_stream.create_consumer_group.assert_called_once_with(
@@ -145,7 +145,7 @@ class TestRunWorker:
             mock_worker_class.return_value = mock_worker
 
             with pytest.raises(Exception, match="Worker error"):
-                await run_worker()
+                await processor_main.run_worker()
 
             # Verify cleanup
             mock_worker.stop.assert_called_once()
@@ -164,7 +164,7 @@ class TestMain:
             mock_config.validate_config = MagicMock()
             mock_config_class.return_value = mock_config
 
-            result = main()
+            result = processor_main.main()
 
             assert result == 0
             mock_run.assert_called_once()
@@ -176,7 +176,7 @@ class TestMain:
             mock_config.validate_config.side_effect = ValueError("Bad config")
             mock_config_class.return_value = mock_config
 
-            result = main()
+            result = processor_main.main()
 
             assert result == 1
 
@@ -190,7 +190,7 @@ class TestMain:
 
             mock_run.side_effect = ConnectionError("Redis unavailable")
 
-            result = main()
+            result = processor_main.main()
 
             assert result == 2
 
@@ -204,7 +204,7 @@ class TestMain:
 
             mock_run.side_effect = KeyboardInterrupt()
 
-            result = main()
+            result = processor_main.main()
 
             assert result == 0
 
@@ -218,7 +218,7 @@ class TestMain:
 
             mock_run.side_effect = RuntimeError("Processing failed")
 
-            result = main()
+            result = processor_main.main()
 
             assert result == 3
 
@@ -226,11 +226,11 @@ class TestMain:
         """Test main configures logging."""
         with patch("src.processor.main.ProcessorConfig") as mock_config_class, \
              patch("src.processor.main.asyncio.run"), \
-             patch("src.processor.main._log.basicConfig") as mock_basic_config:
+             patch("src.processor.main.logging.basicConfig") as mock_basic_config:
             mock_config = MagicMock()
             mock_config.validate_config = MagicMock()
             mock_config_class.return_value = mock_config
 
-            main()
+            processor_main.main()
 
             mock_basic_config.assert_called_once()
