@@ -11,9 +11,7 @@ class TestProcessorConfigValidation:
     def test_validate_config_rejects_zero_window_size(self) -> None:
         """Test validate_config raises on window_size of 0."""
         config = ProcessorConfig(
-            window_size_seconds=0,
-            consumer_group="test",
-            redis_url="redis://localhost"
+            window_size_seconds=0, consumer_group="test", redis_url="redis://localhost"
         )
 
         with pytest.raises(ValueError, match="Invalid window_size_seconds"):
@@ -24,7 +22,7 @@ class TestProcessorConfigValidation:
         config = ProcessorConfig(
             window_size_seconds=-10,
             consumer_group="test",
-            redis_url="redis://localhost"
+            redis_url="redis://localhost",
         )
 
         with pytest.raises(ValueError, match="Invalid window_size_seconds"):
@@ -36,7 +34,7 @@ class TestProcessorConfigValidation:
             window_size_seconds=60,
             consumer_group="test",
             redis_url="redis://localhost",
-            max_retries=-1
+            max_retries=-1,
         )
 
         with pytest.raises(ValueError, match="Invalid max_retries"):
@@ -48,26 +46,23 @@ class TestProcessorConfigValidation:
             window_size_seconds=60,
             consumer_group="test",
             redis_url="redis://localhost",
-            default_threshold=-5.0
+            default_threshold=-5.0,
         )
 
         with pytest.raises(ValueError, match="Invalid default_threshold"):
             config.validate_config()
 
-    def test_validate_config_rejects_partition_id_without_num_partitions(
-        self
-    ) -> None:
+    def test_validate_config_rejects_partition_id_without_num_partitions(self) -> None:
         """Test validate_config raises on partition_id without num_partitions."""
         config = ProcessorConfig(
             window_size_seconds=60,
             consumer_group="test",
             redis_url="redis://localhost",
-            partition_id=1
+            partition_id=1,
         )
 
         with pytest.raises(
-            ValueError,
-            match="num_partitions required when partition_id is set"
+            ValueError, match="num_partitions required when partition_id is set"
         ):
             config.validate_config()
 
@@ -78,35 +73,27 @@ class TestProcessorConfigValidation:
             consumer_group="test",
             redis_url="redis://localhost",
             partition_id=-1,
-            num_partitions=4
+            num_partitions=4,
         )
 
-        with pytest.raises(
-            ValueError,
-            match="Invalid partition_id"
-        ):
+        with pytest.raises(ValueError, match="Invalid partition_id"):
             config.validate_config()
 
-    def test_validate_config_rejects_partition_id_equal_to_num_partitions(
-        self
-    ) -> None:
+    def test_validate_config_rejects_partition_id_equal_to_num_partitions(self) -> None:
         """Test validate_config raises on partition_id >= num_partitions."""
         config = ProcessorConfig(
             window_size_seconds=60,
             consumer_group="test",
             redis_url="redis://localhost",
             partition_id=4,
-            num_partitions=4
+            num_partitions=4,
         )
 
-        with pytest.raises(
-            ValueError,
-            match="Invalid partition_id"
-        ):
+        with pytest.raises(ValueError, match="Invalid partition_id"):
             config.validate_config()
 
     def test_validate_config_rejects_partition_id_greater_than_num_partitions(
-        self
+        self,
     ) -> None:
         """Test validate_config raises on partition_id > num_partitions."""
         config = ProcessorConfig(
@@ -114,13 +101,10 @@ class TestProcessorConfigValidation:
             consumer_group="test",
             redis_url="redis://localhost",
             partition_id=10,
-            num_partitions=4
+            num_partitions=4,
         )
 
-        with pytest.raises(
-            ValueError,
-            match="Invalid partition_id"
-        ):
+        with pytest.raises(ValueError, match="Invalid partition_id"):
             config.validate_config()
 
     def test_validate_config_rejects_negative_metric_threshold(self) -> None:
@@ -129,13 +113,10 @@ class TestProcessorConfigValidation:
             window_size_seconds=60,
             consumer_group="test",
             redis_url="redis://localhost",
-            metric_thresholds={"cpu_usage": -10.0}
+            metric_thresholds={"cpu_usage": -10.0},
         )
 
-        with pytest.raises(
-            ValueError,
-            match="Invalid threshold for cpu_usage"
-        ):
+        with pytest.raises(ValueError, match="Invalid threshold for cpu_usage"):
             config.validate_config()
 
     def test_validate_config_accepts_valid_configuration(self) -> None:
@@ -148,7 +129,7 @@ class TestProcessorConfigValidation:
             default_threshold=80.0,
             partition_id=2,
             num_partitions=4,
-            metric_thresholds={"cpu_usage": 90.0}
+            metric_thresholds={"cpu_usage": 90.0},
         )
 
         # Should not raise
@@ -160,7 +141,7 @@ class TestProcessorConfigValidation:
             window_size_seconds=60,
             consumer_group="test",
             redis_url="redis://localhost",
-            max_retries=0
+            max_retries=0,
         )
 
         # Should not raise
@@ -172,7 +153,7 @@ class TestProcessorConfigValidation:
             window_size_seconds=60,
             consumer_group="test",
             redis_url="redis://localhost",
-            default_threshold=0.0
+            default_threshold=0.0,
         )
 
         # Should not raise
@@ -188,7 +169,7 @@ class TestGetStreamName:
             window_size_seconds=60,
             consumer_group="test",
             redis_url="redis://localhost",
-            stream_name="telemetry"
+            stream_name="telemetry",
         )
 
         stream_name = config.get_stream_name()
@@ -203,7 +184,7 @@ class TestGetStreamName:
             redis_url="redis://localhost",
             stream_name="telemetry",
             partition_id=2,
-            num_partitions=4
+            num_partitions=4,
         )
 
         stream_name = config.get_stream_name()
@@ -218,7 +199,7 @@ class TestGetStreamName:
             redis_url="redis://localhost",
             stream_name="telemetry",
             partition_id=0,
-            num_partitions=4
+            num_partitions=4,
         )
 
         stream_name = config.get_stream_name()
@@ -236,10 +217,7 @@ class TestGetThreshold:
             consumer_group="test",
             redis_url="redis://localhost",
             default_threshold=80.0,
-            metric_thresholds={
-                "cpu_usage": 90.0,
-                "memory_usage": 85.0
-            }
+            metric_thresholds={"cpu_usage": 90.0, "memory_usage": 85.0},
         )
 
         threshold = config.get_threshold("cpu_usage")
@@ -253,22 +231,20 @@ class TestGetThreshold:
             consumer_group="test",
             redis_url="redis://localhost",
             default_threshold=80.0,
-            metric_thresholds={"cpu_usage": 90.0}
+            metric_thresholds={"cpu_usage": 90.0},
         )
 
         threshold = config.get_threshold("network_throughput")
 
         assert threshold == 80.0
 
-    def test_get_threshold_returns_default_with_no_metric_thresholds(
-        self
-    ) -> None:
+    def test_get_threshold_returns_default_with_no_metric_thresholds(self) -> None:
         """Test get_threshold returns default when no metric_thresholds set."""
         config = ProcessorConfig(
             window_size_seconds=60,
             consumer_group="test",
             redis_url="redis://localhost",
-            default_threshold=75.0
+            default_threshold=75.0,
         )
 
         threshold = config.get_threshold("any_metric")

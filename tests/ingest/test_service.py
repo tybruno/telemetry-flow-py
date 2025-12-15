@@ -27,7 +27,7 @@ class TestIngestServiceIngest:
             interface="eth0",
             metric_name="bandwidth",
             metric_value=85.5,
-            timestamp=datetime(2025, 1, 15, 10, 30, 0, tzinfo=timezone.utc)
+            timestamp=datetime(2025, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
         )
 
         response = await service.ingest_telemetry(request)
@@ -47,7 +47,7 @@ class TestIngestServiceIngest:
             interface="eth0",
             metric_name="bandwidth",
             metric_value=85.5,
-            timestamp=datetime.now(timezone.utc)
+            timestamp=datetime.now(timezone.utc),
         )
 
         with pytest.raises(InvalidPayloadError):
@@ -65,7 +65,7 @@ class TestIngestServiceIngest:
             interface="",
             metric_name="bandwidth",
             metric_value=85.5,
-            timestamp=datetime.now(timezone.utc)
+            timestamp=datetime.now(timezone.utc),
         )
 
         with pytest.raises(InvalidPayloadError):
@@ -83,7 +83,7 @@ class TestIngestServiceIngest:
             interface="eth0",
             metric_name="",
             metric_value=85.5,
-            timestamp=datetime.now(timezone.utc)
+            timestamp=datetime.now(timezone.utc),
         )
 
         with pytest.raises(InvalidPayloadError):
@@ -101,7 +101,7 @@ class TestIngestServiceIngest:
             interface="eth0",
             metric_name="bandwidth",
             metric_value=85.5,
-            timestamp=datetime(2025, 1, 15, 10, 30, 0)  # No timezone
+            timestamp=datetime(2025, 1, 15, 10, 30, 0),  # No timezone
         )
 
         with pytest.raises(InvalidPayloadError):

@@ -88,10 +88,7 @@ class ConsumerErrorHandler:
         self._max_delay = max_delay
 
     def _validate_retry_params(
-        self,
-        max_retries: int,
-        base_delay: float,
-        max_delay: float
+        self, max_retries: int, base_delay: float, max_delay: float
     ) -> None:
         """Validate retry configuration parameters.
 
@@ -187,14 +184,11 @@ class ConsumerErrorHandler:
         _log.info(
             "Operation succeeded after %d retries for message_id=%s",
             attempt,
-            message_id
+            message_id,
         )
 
     def _handle_retry_error(
-        self,
-        error: Exception,
-        attempt: int,
-        message_id: str
+        self, error: Exception, attempt: int, message_id: str
     ) -> None:
         """Handle error during retry attempt.
 
@@ -208,9 +202,7 @@ class ConsumerErrorHandler:
         """
         if not self.is_retryable(error):
             _log.error(
-                "Non-retryable error for message_id=%s: %s",
-                message_id,
-                str(error)
+                "Non-retryable error for message_id=%s: %s", message_id, str(error)
             )
             raise ConsumerError("Non-retryable error occurred") from error
 
@@ -220,10 +212,7 @@ class ConsumerErrorHandler:
             self._log_retry_exhausted(message_id, error)
 
     def _log_retry_attempt(
-        self,
-        attempt: int,
-        message_id: str,
-        error: Exception
+        self, attempt: int, message_id: str, error: Exception
     ) -> None:
         """Log retry attempt details.
 
@@ -239,14 +228,10 @@ class ConsumerErrorHandler:
             self._max_retries,
             message_id,
             delay,
-            str(error)
+            str(error),
         )
 
-    def _log_retry_exhausted(
-        self,
-        message_id: str,
-        error: Exception
-    ) -> None:
+    def _log_retry_exhausted(self, message_id: str, error: Exception) -> None:
         """Log retry exhaustion.
 
         Args:
@@ -254,9 +239,7 @@ class ConsumerErrorHandler:
             error: Exception that occurred.
         """
         _log.error(
-            "All retry attempts exhausted for message_id=%s: %s",
-            message_id,
-            str(error)
+            "All retry attempts exhausted for message_id=%s: %s", message_id, str(error)
         )
 
     def is_retryable(self, error: Exception) -> bool:
@@ -320,7 +303,7 @@ class ConsumerErrorHandler:
             await asyncio.sleep(delay)
         """
         # Exponential backoff: base_delay * 2^attempt
-        exponential_delay = self._base_delay * (2 ** attempt)
+        exponential_delay = self._base_delay * (2**attempt)
 
         # Cap at max_delay
         capped_delay = min(exponential_delay, self._max_delay)

@@ -57,12 +57,7 @@ class BackpressureManager:
     _tokens: float
     _last_refill: float
 
-    def __init__(
-        self,
-        *,
-        max_rate: int,
-        window_seconds: float = 1.0
-    ) -> None:
+    def __init__(self, *, max_rate: int, window_seconds: float = 1.0) -> None:
         """Initialize backpressure manager.
 
         Args:
@@ -83,11 +78,7 @@ class BackpressureManager:
         self._tokens = float(max_rate)
         self._last_refill = monotonic()
 
-    def _validate_rate_params(
-        self,
-        max_rate: int,
-        window_seconds: float
-    ) -> None:
+    def _validate_rate_params(self, max_rate: int, window_seconds: float) -> None:
         """Validate rate limiting parameters.
 
         Args:
@@ -145,11 +136,7 @@ class BackpressureManager:
 
         self._log_backpressure_cleared(wait_count)
 
-    def _calculate_wait_time(
-        self,
-        wait_count: int,
-        base_wait_time: float
-    ) -> float:
+    def _calculate_wait_time(self, wait_count: int, base_wait_time: float) -> float:
         """Calculate exponential backoff wait time.
 
         Args:
@@ -159,7 +146,7 @@ class BackpressureManager:
         Returns:
             Wait time in seconds, capped at 1.0.
         """
-        exponential_wait = base_wait_time * (2 ** wait_count)
+        exponential_wait = base_wait_time * (2**wait_count)
         capped_wait: float = min(exponential_wait, 1.0)
         return capped_wait
 

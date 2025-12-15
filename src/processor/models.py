@@ -43,6 +43,7 @@ class TelemetryWindowKey:
         # Use as dictionary key
         windows[key] = window_state
     """
+
     device_id: str
     interface: str
     metric_name: str
@@ -67,6 +68,7 @@ class TelemetryMetricIdentifier:
             unit="percent"
         )
     """
+
     metric_name: str
     metric_type: str
     unit: str | None = None

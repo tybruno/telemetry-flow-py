@@ -136,7 +136,7 @@ class TelemetryConsumer:
             "Starting consumer: stream=%s, group=%s, consumer=%s",
             self._stream_name,
             self._group_name,
-            self._consumer_name
+            self._consumer_name,
         )
 
         await self._setup_consumer_group()
@@ -177,16 +177,14 @@ class TelemetryConsumer:
 
         # Use error handler for deserialization with retry
         event: TelemetryEvent = await self._error_handler.with_retry(
-            operation=deserialize_op,
-            message_id=message_id,
-            data=data
+            operation=deserialize_op, message_id=message_id, data=data
         )
 
         _log.debug(
             "Successfully processed message_id=%s: device=%s, metric=%s",
             message_id,
             event.device_id,
-            event.metric_name
+            event.metric_name,
         )
 
         return event
@@ -204,9 +202,7 @@ class TelemetryConsumer:
 
         try:
             await self._stream.acknowledge(
-                stream=self._stream_name,
-                group=self._group_name,
-                message_id=message_id
+                stream=self._stream_name, group=self._group_name, message_id=message_id
             )
 
             _log.debug("Acknowledged message_id=%s", message_id)
@@ -256,8 +252,7 @@ class TelemetryConsumer:
 
         try:
             await self._stream.create_consumer_group(
-                stream=self._stream_name,
-                group=self._group_name
+                stream=self._stream_name, group=self._group_name
             )
         except Exception as e:
             _log.error("Failed to create consumer group: %s", str(e))
@@ -270,9 +265,7 @@ class TelemetryConsumer:
             await self._backpressure.wait()
 
     async def _process_and_yield_event(
-        self,
-        message_id: str,
-        data: dict[str, str]
+        self, message_id: str, data: dict[str, str]
     ) -> TelemetryEvent | None:
         """Process message and handle acknowledgment.
 
@@ -287,10 +280,7 @@ class TelemetryConsumer:
             ConsumerError: If message acknowledgment fails.
         """
         try:
-            event = await self._process_message(
-                message_id=message_id,
-                data=data
-            )
+            event = await self._process_message(message_id=message_id, data=data)
 
             if event:
                 await self._acknowledge_message(message_id)
@@ -298,11 +288,7 @@ class TelemetryConsumer:
                 return event
 
         except Exception as e:
-            _log.error(
-                "Failed to process message_id=%s: %s",
-                message_id,
-                str(e)
-            )
+            _log.error("Failed to process message_id=%s: %s", message_id, str(e))
 
         return None
 

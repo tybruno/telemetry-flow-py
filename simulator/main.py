@@ -329,4 +329,10 @@ if __name__ == "__main__":
     sys.exit(main())
 
 
-__all__ = ["main", "run_simulator", "send_telemetry", "generate_metric_value", "simulate_device"]
+__all__ = [
+    "main",
+    "run_simulator",
+    "send_telemetry",
+    "generate_metric_value",
+    "simulate_device",
+]

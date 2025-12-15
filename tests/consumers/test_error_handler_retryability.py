@@ -143,6 +143,7 @@ class TestConsumerErrorHandlerRetryability:
         Args:
             handler: ConsumerErrorHandler fixture.
         """
+
         async def failing_operation(data):
             raise ValueError("Non-retryable")
 

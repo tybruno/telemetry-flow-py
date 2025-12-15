@@ -19,6 +19,7 @@ Example:
         except DetectionError as e:
             _log.error("Detection error: %s", e)
 """
+
 from src.core.exceptions import TelemetryError
 
 

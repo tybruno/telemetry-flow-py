@@ -8,6 +8,7 @@ Classes:
     AnomalyResult: Generic anomaly detection result with severity
     AnomalySeverity: Severity classification for anomalies
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -25,6 +26,7 @@ class AnomalySeverity(Enum):
         elif threshold_exceeded > 1.5:
             severity = AnomalySeverity.HIGH
     """
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -60,6 +62,7 @@ class AnomalyResult:
             context={"window_size": 60, "stddev": 5.2}
         )
     """
+
     is_anomaly: bool
     severity: AnomalySeverity
     confidence: float

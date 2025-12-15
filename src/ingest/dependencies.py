@@ -88,10 +88,7 @@ def get_ingest_service() -> IngestService:
     return _service_instance
 
 
-def initialize_service(
-    stream: StreamProtocol,
-    partitioner: StreamPartitioner
-) -> None:
+def initialize_service(stream: StreamProtocol, partitioner: StreamPartitioner) -> None:
     """Initialize the ingest service with dependencies.
 
     Called during application startup to wire up dependencies
@@ -115,12 +112,11 @@ def initialize_service(
 
     _stream_instance = stream
     _partitioner_instance = partitioner
-    _service_instance = IngestService(
-        stream=stream,
-        partitioner=partitioner
-    )
+    _service_instance = IngestService(stream=stream, partitioner=partitioner)
 
-    _log.info("Ingest service initialized with %d partitions", partitioner.num_partitions)
+    _log.info(
+        "Ingest service initialized with %d partitions", partitioner.num_partitions
+    )
 
 
 __all__ = [

@@ -3,6 +3,7 @@
 Provides test fixtures specific to aggregation library testing including
 sample metrics, window configurations, and mock storage.
 """
+
 from unittest.mock import AsyncMock, Mock
 
 import pytest

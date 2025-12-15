@@ -28,7 +28,7 @@ Example:
         # KafkaStream satisfies StreamProtocol without inheritance
 """
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from typing import Any, Protocol
 
 
@@ -73,12 +73,12 @@ class StreamProtocol(Protocol):
         """
         ...
 
-    async def consume(
+    def consume(
         self,
         stream: str,
         group: str,
         consumer_name: str,
-    ) -> AsyncIterator[tuple[str, dict[str, Any]]]:
+    ) -> AsyncGenerator[tuple[str, dict[str, Any]], None]:
         """Consume messages from a stream using consumer groups.
 
         Args:

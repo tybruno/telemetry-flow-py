@@ -15,7 +15,7 @@ class ProcessorConfig(BaseSettings):
 
     Loads settings from environment variables and config files.
     Uses Pydantic Settings for type-safe configuration management.
-    
+
     Supports partitioned stream consumption for horizontal scaling.
 
     Attributes:
@@ -33,7 +33,7 @@ class ProcessorConfig(BaseSettings):
     Example:
         # Single stream (no partitioning)
         config = ProcessorConfig(_env_file="config/processor.yaml")
-        
+
         # Partitioned stream
         config = ProcessorConfig(
             partition_id=0,
@@ -73,18 +73,18 @@ class ProcessorConfig(BaseSettings):
 
     def get_stream_name(self) -> str:
         """Get the stream name for this processor.
-        
+
         Returns partitioned stream name if partition_id is set,
         otherwise returns base stream name.
-        
+
         Returns:
             Stream name to consume from.
-            
+
         Example:
             # No partitioning
             config = ProcessorConfig(stream_name="telemetry")
             assert config.get_stream_name() == "telemetry"
-            
+
             # With partitioning
             config = ProcessorConfig(
                 stream_name="telemetry",

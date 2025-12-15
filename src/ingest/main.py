@@ -93,10 +93,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _log.info("Stream partitioner initialized: partitions=%d", num_partitions)
 
     # Initialize service dependencies
-    initialize_service(
-        stream=cast(StreamProtocol, stream),
-        partitioner=partitioner
-    )
+    initialize_service(stream=cast(StreamProtocol, stream), partitioner=partitioner)
     _log.info("Ingest service dependencies initialized")
 
     yield

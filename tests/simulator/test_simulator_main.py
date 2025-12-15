@@ -1,7 +1,5 @@
 """Tests for simulator main entry points."""
 
-
-
 from simulator.main import main
 
 

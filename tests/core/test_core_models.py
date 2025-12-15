@@ -54,7 +54,7 @@ class TestTelemetryEvent:
             timestamp=sample_timestamp,
         )
 
-        with pytest.raises(Exception):
+        with pytest.raises(AttributeError):
             event.device_id = "router-02"  # type: ignore[misc]
 
     def test_telemetry_event_uses_slots(self) -> None:

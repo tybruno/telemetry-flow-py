@@ -14,14 +14,14 @@ from src.aggregation.models import WindowBounds, WindowMetrics
 @pytest.fixture
 def sample_window_bounds() -> WindowBounds:
     """Sample WindowBounds for testing.
-    
+
     Returns:
         WindowBounds instance with realistic values.
     """
     window_bounds = WindowBounds(
         start=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
         end=datetime(2024, 1, 1, 12, 1, 0, tzinfo=timezone.utc),
-        size_seconds=60.0
+        size_seconds=60.0,
     )
     return window_bounds
 
@@ -48,7 +48,7 @@ def sample_window_metrics(sample_window_bounds: WindowBounds) -> WindowMetrics:
         maximum=95.0,
         stddev=5.2,
         count=120,
-        sum=10260.0
+        sum=10260.0,
     )
     return sample_metrics
 
@@ -95,7 +95,7 @@ def normal_metrics(sample_window_bounds: WindowBounds) -> WindowMetrics:
         maximum=75.0,
         stddev=4.5,
         count=100,
-        sum=6500.0
+        sum=6500.0,
     )
     return normal_values
 
@@ -122,6 +122,6 @@ def anomalous_metrics(sample_window_bounds: WindowBounds) -> WindowMetrics:
         maximum=99.0,
         stddev=3.2,
         count=110,
-        sum=10505.0
+        sum=10505.0,
     )
     return anomalous_values

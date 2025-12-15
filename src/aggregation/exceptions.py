@@ -19,6 +19,7 @@ Example:
         except AggregationError as e:
             _log.error("Aggregation error: %s", e)
 """
+
 from src.core.exceptions import TelemetryError
 
 

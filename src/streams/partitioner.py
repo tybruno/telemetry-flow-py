@@ -30,10 +30,10 @@ class StreamPartitioner:
     Example:
         # Create partitioner for 3 partitions
         partitioner = StreamPartitioner(num_partitions=3)
-        
+
         # Get partition for device
         partition = partitioner.get_partition("router-01")
-        
+
         # Get full stream name
         stream = partitioner.get_stream_name("telemetry", "router-01")
         # Returns: "telemetry:0", "telemetry:1", or "telemetry:2"
@@ -44,7 +44,9 @@ class StreamPartitioner:
     _num_partitions: int
     _base_stream_name: str
 
-    def __init__(self, *, num_partitions: int = 3, base_stream_name: str = "telemetry") -> None:
+    def __init__(
+        self, *, num_partitions: int = 3, base_stream_name: str = "telemetry"
+    ) -> None:
         """Initialize stream partitioner.
 
         Args:
@@ -73,7 +75,7 @@ class StreamPartitioner:
 
     def __repr__(self) -> str:
         """Return string representation.
-        
+
         Returns:
             String representation showing partitions and base name.
         """
@@ -156,8 +158,7 @@ class StreamPartitioner:
             # Returns: ["telemetry:0", "telemetry:1", "telemetry:2"]
         """
         stream_names = [
-            f"{base_name}:{partition}"
-            for partition in range(self._num_partitions)
+            f"{base_name}:{partition}" for partition in range(self._num_partitions)
         ]
         return stream_names
 

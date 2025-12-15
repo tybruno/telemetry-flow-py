@@ -26,7 +26,7 @@ class TestSendTelemetry:
         self, mock_ingest_url: str, sample_device_id: str
     ) -> None:
         """Test successful telemetry sending.
-        
+
         Args:
             mock_ingest_url: Mock ingest URL fixture.
             sample_device_id: Sample device ID fixture.
@@ -56,7 +56,7 @@ class TestSendTelemetry:
         self, mock_ingest_url: str, sample_device_id: str
     ) -> None:
         """Test telemetry sending with HTTP error.
-        
+
         Args:
             mock_ingest_url: Mock ingest URL fixture.
             sample_device_id: Sample device ID fixture.
@@ -87,7 +87,7 @@ class TestSendTelemetry:
         self, mock_ingest_url: str, sample_device_id: str
     ) -> None:
         """Test telemetry sending with timeout.
-        
+
         Args:
             mock_ingest_url: Mock ingest URL fixture.
             sample_device_id: Sample device ID fixture.
@@ -116,7 +116,7 @@ class TestSendTelemetry:
         self, mock_ingest_url: str, sample_device_id: str
     ) -> None:
         """Test telemetry sending with connection error.
-        
+
         Args:
             mock_ingest_url: Mock ingest URL fixture.
             sample_device_id: Sample device ID fixture.
@@ -161,7 +161,7 @@ class TestGenerateMetricValue:
         self, metric_name: str, is_anomaly: bool, min_val: float, max_val: float
     ) -> None:
         """Test metric value generation within correct ranges.
-        
+
         Args:
             metric_name: Name of metric.
             is_anomaly: Whether to generate anomaly.
@@ -208,7 +208,7 @@ class TestSimulateDevice:
         mock_ingest_url: str,
     ) -> None:
         """Test device simulation sends telemetry.
-        
+
         Args:
             sample_device_id: Sample device ID fixture.
             sample_interfaces: Sample interfaces fixture.
@@ -249,13 +249,14 @@ class TestSimulateDevice:
         mock_ingest_url: str,
     ) -> None:
         """Test device simulation handles cancellation gracefully.
-        
+
         Args:
             sample_device_id: Sample device ID fixture.
             sample_interfaces: Sample interfaces fixture.
             sample_metrics: Sample metrics fixture.
             mock_ingest_url: Mock ingest URL fixture.
         """
+
         async def mock_send(*args: Any, **kwargs: Any) -> bool:
             return True
 
@@ -284,7 +285,7 @@ class TestSimulateDevice:
         mock_ingest_url: str,
     ) -> None:
         """Test device simulation handles errors.
-        
+
         Args:
             sample_device_id: Sample device ID fixture.
             sample_interfaces: Sample interfaces fixture.
@@ -332,6 +333,7 @@ class TestRunSimulator:
     @pytest.mark.asyncio
     async def test_run_simulator_creates_tasks(self) -> None:
         """Test simulator creates tasks for devices."""
+
         async def mock_simulate(*args: Any, **kwargs: Any) -> None:
             await asyncio.sleep(0.01)
 
@@ -365,7 +367,9 @@ class TestRunSimulator:
                 call_count += 1
                 await asyncio.sleep(0.01)  # Small delay to allow cancellation
 
-            with patch("simulator.main.simulate_device", side_effect=mock_simulate_device):
+            with patch(
+                "simulator.main.simulate_device", side_effect=mock_simulate_device
+            ):
                 # Create a task that will be cancelled shortly
                 task = asyncio.create_task(run_simulator())
                 await asyncio.sleep(0.05)  # Let it start
@@ -382,6 +386,7 @@ class TestRunSimulator:
     @pytest.mark.asyncio
     async def test_run_simulator_handles_keyboard_interrupt(self) -> None:
         """Test simulator handles keyboard interrupt."""
+
         async def mock_simulate(*args: Any, **kwargs: Any) -> None:
             await asyncio.sleep(0.01)
 
@@ -401,6 +406,7 @@ class TestMain:
 
     def test_main_success(self) -> None:
         """Test main function returns 0 on success."""
+
         async def mock_run() -> None:
             raise KeyboardInterrupt
 

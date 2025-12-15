@@ -363,6 +363,7 @@ class TestTelemetryWorker:
             worker: TelemetryWorker fixture.
             mock_consumer: Mock consumer fixture.
         """
+
         # Mock consumer to raise exception
         async def mock_consume():
             raise RuntimeError("Consumer error")

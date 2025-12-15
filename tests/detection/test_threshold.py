@@ -50,7 +50,7 @@ class TestThresholdDetector:
         bounds = WindowBounds(
             start=datetime(2025, 12, 12, 10, 0, 0, tzinfo=timezone.utc),
             end=datetime(2025, 12, 12, 10, 1, 0, tzinfo=timezone.utc),
-            size_seconds=60.0
+            size_seconds=60.0,
         )
         metric = WindowMetrics(
             device_id="router-01",
@@ -62,7 +62,7 @@ class TestThresholdDetector:
             maximum=95.0,
             stddev=10.0,
             count=10,
-            sum=750.0
+            sum=750.0,
         )
         return metric
 
@@ -112,7 +112,7 @@ class TestThresholdDetector:
         bounds = WindowBounds(
             start=datetime(2025, 12, 12, 10, 0, 0, tzinfo=timezone.utc),
             end=datetime(2025, 12, 12, 10, 1, 0, tzinfo=timezone.utc),
-            size_seconds=60.0
+            size_seconds=60.0,
         )
         high_metric = WindowMetrics(
             device_id="router-01",
@@ -124,7 +124,7 @@ class TestThresholdDetector:
             maximum=99.0,
             stddev=3.0,
             count=10,
-            sum=950.0
+            sum=950.0,
         )
 
         is_anomaly_result = detector.is_anomaly(high_metric)
@@ -142,9 +142,10 @@ class TestThresholdDetector:
         bounds = WindowBounds(
             start=datetime(2025, 12, 12, 10, 0, 0, tzinfo=timezone.utc),
             end=datetime(2025, 12, 12, 10, 1, 0, tzinfo=timezone.utc),
-            size_seconds=60.0
+            size_seconds=60.0,
         )
-        # 95.0 vs 90.0 threshold (cpu_utilization in detector fixture) = 5.56% over = low severity
+        # 95.0 vs 90.0 threshold (cpu_utilization in detector fixture)
+        # = 5.56% over = low severity
         low_metric = WindowMetrics(
             device_id="router-01",
             interface="eth0",
@@ -155,7 +156,7 @@ class TestThresholdDetector:
             maximum=99.0,
             stddev=3.0,
             count=10,
-            sum=950.0
+            sum=950.0,
         )
 
         result = detector.create_anomaly_result(low_metric)
@@ -174,7 +175,7 @@ class TestThresholdDetector:
         bounds = WindowBounds(
             start=datetime(2025, 12, 12, 10, 0, 0, tzinfo=timezone.utc),
             end=datetime(2025, 12, 12, 10, 1, 0, tzinfo=timezone.utc),
-            size_seconds=60.0
+            size_seconds=60.0,
         )
         high_metric = WindowMetrics(
             device_id="router-01",
@@ -186,7 +187,7 @@ class TestThresholdDetector:
             maximum=99.0,
             stddev=3.0,
             count=10,
-            sum=950.0
+            sum=950.0,
         )
 
         result = detector.create_anomaly_result(high_metric)
@@ -220,7 +221,7 @@ class TestThresholdDetector:
         bounds = WindowBounds(
             start=datetime(2025, 12, 12, 10, 0, 0, tzinfo=timezone.utc),
             end=datetime(2025, 12, 12, 10, 1, 0, tzinfo=timezone.utc),
-            size_seconds=60.0
+            size_seconds=60.0,
         )
         metric = WindowMetrics(
             device_id="router-01",
@@ -232,7 +233,7 @@ class TestThresholdDetector:
             maximum=95.0,
             stddev=10.0,
             count=10,
-            sum=750.0
+            sum=750.0,
         )
 
         # Should use default threshold

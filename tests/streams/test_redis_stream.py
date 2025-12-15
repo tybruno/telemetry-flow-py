@@ -20,8 +20,7 @@ class TestRedisStreamPublish:
         stream._client.xadd = AsyncMock(return_value="1234567890-0")
 
         message_id = await stream.publish(
-            stream="telemetry",
-            data={"device_id": "router-01", "value": 85.5}
+            stream="telemetry", data={"device_id": "router-01", "value": 85.5}
         )
 
         assert message_id == "1234567890-0"
@@ -46,16 +45,16 @@ class TestRedisStreamConsume:
         stream = RedisStream(url="redis://localhost:6379/0")
         stream._client = AsyncMock()
 
-        stream._client.xreadgroup = AsyncMock(side_effect=[
-            [[b"telemetry", [(b"1-0", {b"device_id": b"router-01"})]]],
-            None
-        ])
+        stream._client.xreadgroup = AsyncMock(
+            side_effect=[
+                [[b"telemetry", [(b"1-0", {b"device_id": b"router-01"})]]],
+                None,
+            ]
+        )
 
         messages = []
         async for msg_id, data in stream.consume(
-            stream="telemetry",
-            group="processors",
-            consumer_name="worker-01"
+            stream="telemetry", group="processors", consumer_name="worker-01"
         ):
             messages.append((msg_id, data))
             break
@@ -76,9 +75,7 @@ class TestRedisStreamAcknowledge:
         stream._client.xack = AsyncMock(return_value=1)
 
         await stream.acknowledge(
-            stream="telemetry",
-            group="processors",
-            message_id="1234567890-0"
+            stream="telemetry", group="processors", message_id="1234567890-0"
         )
 
         stream._client.xack.assert_called_once()
@@ -95,9 +92,7 @@ class TestRedisStreamConsumerGroup:
         stream._client.xgroup_create = AsyncMock()
 
         await stream.create_consumer_group(
-            stream="telemetry",
-            group="processors",
-            start_id="$"
+            stream="telemetry", group="processors", start_id="$"
         )
 
         stream._client.xgroup_create.assert_called_once()
@@ -112,7 +107,5 @@ class TestRedisStreamConsumerGroup:
 
         # Should not raise
         await stream.create_consumer_group(
-            stream="telemetry",
-            group="processors",
-            start_id="$"
+            stream="telemetry", group="processors", start_id="$"
         )

@@ -20,6 +20,7 @@ Example:
         except ConsumerError as e:
             _log.error("Consumer error: %s", e)
 """
+
 from src.core.exceptions import TelemetryError
 
 

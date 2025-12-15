@@ -41,7 +41,7 @@ Example:
 """
 
 import logging as _log
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import suppress
 from typing import Any
 
@@ -157,7 +157,7 @@ class RedisStream:
         stream: str,
         group: str,
         consumer_name: str,
-    ) -> AsyncIterator[tuple[str, dict[str, Any]]]:
+    ) -> AsyncGenerator[tuple[str, dict[str, Any]], None]:
         """Consume from Redis stream with consumer group using XREADGROUP.
 
         Args:
@@ -188,8 +188,12 @@ class RedisStream:
             _log.error(error_message)
             raise ValueError(error_message) from None
 
-        _log.info("Starting consumption: stream=%s, group=%s, consumer=%s",
-                  stream, group, consumer_name)
+        _log.info(
+            "Starting consumption: stream=%s, group=%s, consumer=%s",
+            stream,
+            group,
+            consumer_name,
+        )
 
         while True:
             try:
@@ -208,8 +212,9 @@ class RedisStream:
                 # Result format: [(stream_name, [(msg_id, data), ...])]
                 for _, messages in result:
                     for message_id, data in messages:
-                        _log.debug("Consumed message: stream=%s, msg_id=%s",
-                                   stream, message_id)
+                        _log.debug(
+                            "Consumed message: stream=%s, msg_id=%s", stream, message_id
+                        )
                         yield message_id, data
 
             except redis.ResponseError as e:
@@ -310,8 +315,9 @@ class RedisStream:
         except redis.ResponseError as e:
             # Ignore if group already exists
             if "BUSYGROUP" in str(e):
-                _log.debug("Consumer group already exists: stream=%s, group=%s",
-                          stream, group)
+                _log.debug(
+                    "Consumer group already exists: stream=%s, group=%s", stream, group
+                )
                 return
             error_message = "Failed to create consumer group: %s"
             _log.error(error_message, str(e))

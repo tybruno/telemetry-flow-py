@@ -7,6 +7,7 @@ Classes:
     ConsumerMessage: Wrapper for consumed stream messages
     ConsumerState: Internal consumer state tracking
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -35,6 +36,7 @@ class ConsumerMessage:
             retry_count=0
         )
     """
+
     message_id: str
     stream_name: str
     data: dict[str, Any]
@@ -66,6 +68,7 @@ class ConsumerState:
             is_running=True
         )
     """
+
     consumer_name: str
     group_name: str
     messages_processed: int

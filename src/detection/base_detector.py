@@ -137,7 +137,7 @@ class BaseDetector(ABC):
                 "max": metric.maximum,
                 "stddev": metric.stddev,
                 "count": float(metric.count),
-            }
+            },
         )
         return anomaly_result
 

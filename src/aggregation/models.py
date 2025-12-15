@@ -8,6 +8,7 @@ Classes:
     WindowMetrics: Statistical aggregation results for a time window
     WindowBounds: Timestamp boundaries defining a window
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -31,6 +32,7 @@ class WindowBounds:
             size_seconds=60
         )
     """
+
     start: datetime
     end: datetime
     size_seconds: float
@@ -69,6 +71,7 @@ class WindowMetrics:
             sum=10260.0
         )
     """
+
     device_id: str
     interface: str
     metric_name: str

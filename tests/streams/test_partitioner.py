@@ -140,9 +140,15 @@ class TestStreamPartitioner:
 
         device_id = "router-05"
 
-        stream1 = partitioner.get_stream_name(base_name="telemetry", device_id=device_id)
-        stream2 = partitioner.get_stream_name(base_name="telemetry", device_id=device_id)
-        stream3 = partitioner.get_stream_name(base_name="telemetry", device_id=device_id)
+        stream1 = partitioner.get_stream_name(
+            base_name="telemetry", device_id=device_id
+        )
+        stream2 = partitioner.get_stream_name(
+            base_name="telemetry", device_id=device_id
+        )
+        stream3 = partitioner.get_stream_name(
+            base_name="telemetry", device_id=device_id
+        )
 
         assert stream1 == stream2 == stream3
         result_stream = stream1
@@ -172,10 +178,9 @@ class TestStreamPartitioner:
         # Different stream names
         assert telemetry_stream.startswith("telemetry:")
         assert metrics_stream.startswith("metrics:")
-        result_different_bases = (
-            telemetry_stream.startswith("telemetry:")
-            and metrics_stream.startswith("metrics:")
-        )
+        result_different_bases = telemetry_stream.startswith(
+            "telemetry:"
+        ) and metrics_stream.startswith("metrics:")
         assert result_different_bases is True
 
     def test_get_all_stream_names(self) -> None:
@@ -323,9 +328,7 @@ class TestStreamPartitionerIntegration:
 
         devices = ["router-01", "router-02", "router-03", "router-04", "router-05"]
 
-        assignments = {
-            device: partitioner.get_partition(device) for device in devices
-        }
+        assignments = {device: partitioner.get_partition(device) for device in devices}
 
         # All devices assigned
         assert len(assignments) == len(devices)

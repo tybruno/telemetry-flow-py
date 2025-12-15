@@ -96,19 +96,14 @@ class TumblingWindowAggregator(BaseAggregator):
         self._validate_event(event)
 
         window_key = self._generate_window_key(
-            event.device_id,
-            event.interface,
-            event.metric_name
+            event.device_id, event.interface, event.metric_name
         )
 
         window_start = self._align_to_window_start(event.timestamp)
         window_end = self._calculate_window_end(window_start)
 
         completed_metrics = self._check_window_boundary(
-            window_key,
-            event,
-            window_start,
-            window_end
+            window_key, event, window_start, window_end
         )
 
         if completed_metrics:
@@ -200,7 +195,7 @@ class TumblingWindowAggregator(BaseAggregator):
             "Initialized window: key=%s, start=%s, value=%f",
             window_key,
             window_start,
-            event.metric_value
+            event.metric_value,
         )
 
     def _accumulate_event(
@@ -250,7 +245,9 @@ class TumblingWindowAggregator(BaseAggregator):
         """
         values = self._extract_window_values(window)
         stats = self._calculate_statistics(values, window)
-        bounds, device_id, interface, metric_name = self._create_window_bounds(window, window_key)
+        bounds, device_id, interface, metric_name = self._create_window_bounds(
+            window, window_key
+        )
 
         metrics = WindowMetrics(
             device_id=device_id,
@@ -262,7 +259,7 @@ class TumblingWindowAggregator(BaseAggregator):
             maximum=stats["maximum"],
             stddev=stats["stddev"],
             count=int(stats["count"]),
-            sum=stats["sum"]
+            sum=stats["sum"],
         )
 
         self._log_window_completion(window_key, stats)
@@ -271,10 +268,7 @@ class TumblingWindowAggregator(BaseAggregator):
 
         return metrics
 
-    def _extract_window_values(
-        self,
-        window: dict[str, object]
-    ) -> list[float]:
+    def _extract_window_values(self, window: dict[str, object]) -> list[float]:
         """Extract values from window state.
 
         Args:
@@ -288,9 +282,7 @@ class TumblingWindowAggregator(BaseAggregator):
         return values
 
     def _calculate_statistics(
-        self,
-        values: list[float],
-        window: dict[str, object]
+        self, values: list[float], window: dict[str, object]
     ) -> dict[str, float]:
         """Calculate statistical metrics for window.
 
@@ -322,16 +314,11 @@ class TumblingWindowAggregator(BaseAggregator):
             "maximum": maximum,
             "stddev": stddev,
             "count": count,
-            "sum": total_sum
+            "sum": total_sum,
         }
         return statistics
 
-    def _calculate_stddev(
-        self,
-        values: list[float],
-        mean: float,
-        count: int
-    ) -> float:
+    def _calculate_stddev(self, values: list[float], mean: float, count: int) -> float:
         """Calculate standard deviation.
 
         Args:
@@ -351,9 +338,7 @@ class TumblingWindowAggregator(BaseAggregator):
         return standard_deviation
 
     def _create_window_bounds(
-        self,
-        window: dict[str, object],
-        window_key: tuple[str, str, str]
+        self, window: dict[str, object], window_key: tuple[str, str, str]
     ) -> tuple[WindowBounds, str, str, str]:
         """Create window bounds and extract context from window state.
 
@@ -373,9 +358,7 @@ class TumblingWindowAggregator(BaseAggregator):
         assert isinstance(end, datetime)
 
         bounds = WindowBounds(
-            start=start,
-            end=end,
-            size_seconds=float(self._window_size)
+            start=start, end=end, size_seconds=float(self._window_size)
         )
 
         device_id, interface, metric_name = window_key
@@ -383,9 +366,7 @@ class TumblingWindowAggregator(BaseAggregator):
         return bounds, device_id, interface, metric_name
 
     def _log_window_completion(
-        self,
-        window_key: tuple[str, str, str],
-        stats: dict[str, float]
+        self, window_key: tuple[str, str, str], stats: dict[str, float]
     ) -> None:
         """Log window completion details.
 
@@ -399,7 +380,7 @@ class TumblingWindowAggregator(BaseAggregator):
             int(stats["count"]),
             stats["average"],
             stats["minimum"],
-            stats["maximum"]
+            stats["maximum"],
         )
 
 

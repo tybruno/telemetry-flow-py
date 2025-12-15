@@ -88,13 +88,11 @@ class ThresholdDetector(BaseDetector):
         _log.info(
             "Threshold detector initialized: default=%f, custom_thresholds=%d",
             default_threshold,
-            len(thresholds)
+            len(thresholds),
         )
 
     def _validate_threshold_params(
-        self,
-        thresholds: dict[str, float],
-        default_threshold: float
+        self, thresholds: dict[str, float], default_threshold: float
     ) -> None:
         """Validate threshold configuration.
 
@@ -174,19 +172,16 @@ class ThresholdDetector(BaseDetector):
             metric=metric,
             severity=severity,
             description=description,
-            confidence=confidence
+            confidence=confidence,
         )
 
         from dataclasses import replace
+
         anomaly_with_threshold = replace(anomaly_result, threshold_value=threshold)
 
         return anomaly_with_threshold
 
-    def _validate_is_anomaly(
-        self,
-        actual_value: float,
-        threshold: float
-    ) -> None:
+    def _validate_is_anomaly(self, actual_value: float, threshold: float) -> None:
         """Validate that metric represents an anomaly.
 
         Args:
@@ -201,10 +196,7 @@ class ThresholdDetector(BaseDetector):
             _log.error(error_message, actual_value, threshold)
             raise ValueError(error_message % (actual_value, threshold)) from None
 
-    def _calculate_severity(
-        self,
-        excess_ratio: float
-    ) -> tuple[str, float]:
+    def _calculate_severity(self, excess_ratio: float) -> tuple[str, float]:
         """Calculate severity and confidence based on excess ratio.
 
         Args:

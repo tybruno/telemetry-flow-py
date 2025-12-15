@@ -82,7 +82,7 @@ async def ingest_telemetry(
         _log.info(
             "Telemetry ingested: event_id=%s, device=%s",
             response.event_id,
-            request.device_id
+            request.device_id,
         )
 
         return response
@@ -90,15 +90,14 @@ async def ingest_telemetry(
     except InvalidPayloadError as e:
         _log.warning("Invalid telemetry payload: %s", str(e))
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
         ) from e
 
     except StreamPublishError as e:
         _log.error("Failed to publish telemetry: %s", str(e))
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Service temporarily unavailable"
+            detail="Service temporarily unavailable",
         ) from e
 
 
@@ -136,7 +135,7 @@ async def health_check(
     response = HealthResponse(
         status="healthy" if is_healthy else "unhealthy",
         redis_connected=is_healthy,
-        uptime_seconds=uptime
+        uptime_seconds=uptime,
     )
 
     return response

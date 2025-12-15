@@ -96,7 +96,7 @@ class TestAlert:
             timestamp=sample_timestamp,
         )
 
-        with pytest.raises(Exception):
+        with pytest.raises(AttributeError):
             alert.severity = AlertSeverity.CRITICAL  # type: ignore[misc]
 
     def test_alert_uses_slots(self) -> None:
@@ -137,7 +137,12 @@ class TestAlert:
 
     @pytest.mark.parametrize(
         "severity",
-        [AlertSeverity.LOW, AlertSeverity.MEDIUM, AlertSeverity.HIGH, AlertSeverity.CRITICAL],
+        [
+            AlertSeverity.LOW,
+            AlertSeverity.MEDIUM,
+            AlertSeverity.HIGH,
+            AlertSeverity.CRITICAL,
+        ],
     )
     def test_alert_with_all_severities(
         self,

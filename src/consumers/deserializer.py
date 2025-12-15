@@ -75,7 +75,7 @@ class MessageDeserializer:
                 interface=fields["interface"],
                 metric_name=fields["metric_name"],
                 metric_value=metric_value,
-                timestamp=timestamp
+                timestamp=timestamp,
             )
 
             return event
@@ -87,10 +87,7 @@ class MessageDeserializer:
             _log.error(error_message, str(e))
             raise DeserializationError(error_message % str(e)) from e
 
-    def _extract_required_fields(
-        self,
-        data: dict[str, Any]
-    ) -> dict[str, str]:
+    def _extract_required_fields(self, data: dict[str, Any]) -> dict[str, str]:
         """Extract and validate required fields from raw data.
 
         Args:
@@ -108,13 +105,9 @@ class MessageDeserializer:
         metric_value_str = data.get("metric_value")
         timestamp_str = data.get("timestamp")
 
-        all_fields_present = all([
-            device_id,
-            interface,
-            metric_name,
-            metric_value_str,
-            timestamp_str
-        ])
+        all_fields_present = all(
+            [device_id, interface, metric_name, metric_value_str, timestamp_str]
+        )
 
         if not all_fields_present:
             missing_fields = self._identify_missing_fields(data)
@@ -129,14 +122,11 @@ class MessageDeserializer:
             "interface": str(interface),
             "metric_name": str(metric_name),
             "metric_value_str": str(metric_value_str),
-            "timestamp_str": str(timestamp_str)
+            "timestamp_str": str(timestamp_str),
         }
         return validated_fields
 
-    def _identify_missing_fields(
-        self,
-        data: dict[str, Any]
-    ) -> list[str]:
+    def _identify_missing_fields(self, data: dict[str, Any]) -> list[str]:
         """Identify which required fields are missing.
 
         Args:
@@ -150,13 +140,10 @@ class MessageDeserializer:
             "interface",
             "metric_name",
             "metric_value",
-            "timestamp"
+            "timestamp",
         ]
 
-        missing_fields = [
-            field for field in required_fields
-            if not data.get(field)
-        ]
+        missing_fields = [field for field in required_fields if not data.get(field)]
 
         return missing_fields
 

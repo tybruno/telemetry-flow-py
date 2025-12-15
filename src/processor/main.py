@@ -152,9 +152,7 @@ async def run_worker() -> None:
         consumer_name=consumer_name,
     )
 
-    aggregator = TumblingWindowAggregator(
-        window_size=config.window_size_seconds
-    )
+    aggregator = TumblingWindowAggregator(window_size=config.window_size_seconds)
 
     detector = ThresholdDetector(
         thresholds=config.metric_thresholds,

@@ -221,7 +221,7 @@ class TelemetryWorker:
                 "Processing event: device=%s, interface=%s, metric=%s",
                 event.device_id,
                 event.interface,
-                event.metric_name
+                event.metric_name,
             )
 
     def _log_window_completion(self, window_metrics: object) -> None:
@@ -238,7 +238,7 @@ class TelemetryWorker:
                 window_metrics.count,
                 window_metrics.average,
                 window_metrics.minimum,
-                window_metrics.maximum
+                window_metrics.maximum,
             )
 
     async def _detect_and_alert(self, window_metrics: object) -> None:
@@ -261,15 +261,13 @@ class TelemetryWorker:
                 "Anomaly detected: severity=%s, value=%f, threshold=%f",
                 anomaly_result.severity.value,
                 anomaly_result.metric_value,
-                anomaly_result.threshold_value or 0.0
+                anomaly_result.threshold_value or 0.0,
             )
 
             await self._send_anomaly_alert(window_metrics, anomaly_result)
 
     async def _send_anomaly_alert(
-        self,
-        window_metrics: object,
-        anomaly_result: object
+        self, window_metrics: object, anomaly_result: object
     ) -> None:
         """Send alert for detected anomaly.
 
@@ -296,8 +294,8 @@ class TelemetryWorker:
                 "window_count": window_metrics.count,
                 "window_average": window_metrics.average,
                 "window_start": window_metrics.window_bounds.start.isoformat(),
-                "window_end": window_metrics.window_bounds.end.isoformat()
-            }
+                "window_end": window_metrics.window_bounds.end.isoformat(),
+            },
         )
 
 

@@ -6,7 +6,7 @@ import pytest
 @pytest.fixture
 def mock_ingest_url() -> str:
     """Mock ingest URL for testing.
-    
+
     Returns:
         Mock URL string.
     """
@@ -17,7 +17,7 @@ def mock_ingest_url() -> str:
 @pytest.fixture
 def sample_device_id() -> str:
     """Sample device ID for testing.
-    
+
     Returns:
         Device ID string.
     """
@@ -28,7 +28,7 @@ def sample_device_id() -> str:
 @pytest.fixture
 def sample_interfaces() -> list[str]:
     """Sample interfaces for testing.
-    
+
     Returns:
         List of interface names.
     """
@@ -39,7 +39,7 @@ def sample_interfaces() -> list[str]:
 @pytest.fixture
 def sample_metrics() -> list[str]:
     """Sample metrics for testing.
-    
+
     Returns:
         List of metric names.
     """

@@ -1,6 +1,5 @@
 """Tests for BaseDetector abstract method."""
 
-
 import pytest
 
 from src.detection.base_detector import BaseDetector
@@ -8,6 +7,7 @@ from src.detection.base_detector import BaseDetector
 
 class AbstractDetectorNoImpl(BaseDetector):
     """Detector without detect implementation."""
+
     pass
 
 

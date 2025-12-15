@@ -53,6 +53,7 @@ class TestStorageIntegration:
 
         # Wait for expiration
         import asyncio
+
         await asyncio.sleep(3)
 
         # Should be expired

@@ -45,7 +45,7 @@ class TestBaseAggregator:
         aggregator = ConcreteAggregator(window_size_seconds=60)
 
         # Verify aggregate method exists and is callable
-        assert hasattr(aggregator, 'aggregate')
+        assert hasattr(aggregator, "aggregate")
         assert callable(aggregator.aggregate)
 
 

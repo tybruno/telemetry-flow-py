@@ -3,6 +3,7 @@
 Provides test fixtures specific to consumer library testing including
 mock streams, sample messages, and consumer configurations.
 """
+
 from unittest.mock import AsyncMock, Mock
 
 import pytest

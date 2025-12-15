@@ -4,7 +4,6 @@ Tests the ConsumerErrorHandler class including retry logic, exponential
 backoff, and error classification.
 """
 
-
 import pytest
 
 from src.consumers.error_handler import ConsumerErrorHandler
@@ -46,15 +45,15 @@ class TestConsumerErrorHandler:
             return "success"
 
         result = await handler.with_retry(
-            operation=failing_operation,
-            message_id="test-123",
-            data={"test": "data"}
+            operation=failing_operation, message_id="test-123", data={"test": "data"}
         )
 
         assert result == "success"
         assert call_count == 3
 
-    async def test_no_retry_permanent_error(self, handler: ConsumerErrorHandler) -> None:
+    async def test_no_retry_permanent_error(
+        self, handler: ConsumerErrorHandler
+    ) -> None:
         """Test handler doesn't retry permanent errors.
 
         Verifies operation fails immediately for permanent errors
@@ -75,7 +74,7 @@ class TestConsumerErrorHandler:
             await handler.with_retry(
                 operation=failing_operation,
                 message_id="test-123",
-                data={"test": "data"}
+                data={"test": "data"},
             )
 
         assert call_count == 1
@@ -88,14 +87,13 @@ class TestConsumerErrorHandler:
         Args:
             handler: ConsumerErrorHandler fixture.
         """
+
         async def always_fails(data: dict) -> str:
             raise TimeoutError("Always fails")
 
         with pytest.raises(RetryExhaustedError):
             await handler.with_retry(
-                operation=always_fails,
-                message_id="test-123",
-                data={"test": "data"}
+                operation=always_fails, message_id="test-123", data={"test": "data"}
             )
 
     async def test_max_retries_exceeded(self, handler: ConsumerErrorHandler) -> None:
@@ -106,12 +104,11 @@ class TestConsumerErrorHandler:
         Args:
             handler: ConsumerErrorHandler fixture.
         """
+
         async def always_fails(data: dict) -> str:
             raise ConnectionError("Connection failed")
 
         with pytest.raises(RetryExhaustedError):
             await handler.with_retry(
-                operation=always_fails,
-                message_id="test-123",
-                data={"test": "data"}
+                operation=always_fails, message_id="test-123", data={"test": "data"}
             )

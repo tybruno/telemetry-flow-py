@@ -9,7 +9,7 @@ from redis.asyncio import Redis
 @pytest.fixture
 def redis_url() -> str:
     """Provide Redis URL for integration tests.
-    
+
     Returns:
         Redis connection URL string
     """
@@ -20,7 +20,7 @@ def redis_url() -> str:
 @pytest.fixture
 async def redis_client() -> AsyncIterator[Redis]:
     """Provide Redis client for integration tests.
-    
+
     Yields:
         Connected Redis client instance
     """
@@ -32,11 +32,12 @@ async def redis_client() -> AsyncIterator[Redis]:
 @pytest.fixture
 def test_stream_name() -> str:
     """Provide unique stream name for each test.
-    
+
     Returns:
         Stream name prefixed with test identifier
     """
     import uuid
+
     stream_name = f"test-stream-{uuid.uuid4().hex[:8]}"
     return stream_name
 

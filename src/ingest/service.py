@@ -35,7 +35,7 @@ class IngestService:
 
     Handles validation, transformation, and publishing of telemetry
     events. Depends on a StreamProtocol implementation for publishing.
-    
+
     Uses partitioning to distribute events across multiple streams
     based on device_id, enabling horizontal scaling of processors.
 
@@ -147,7 +147,7 @@ class IngestService:
             "Ingesting telemetry: device=%s, interface=%s, metric=%s",
             request.device_id,
             request.interface,
-            request.metric_name
+            request.metric_name,
         )
 
         # Validate request
@@ -160,9 +160,7 @@ class IngestService:
         event_id = await self._publish_event(event)
 
         response = IngestResponse(
-            event_id=event_id,
-            status="accepted",
-            device_id=request.device_id
+            event_id=event_id, status="accepted", device_id=request.device_id
         )
         return response
 
@@ -237,9 +235,7 @@ class IngestService:
             raise InvalidPayloadError(error_message % joined_errors) from None
 
     def _validate_device_fields(
-        self,
-        request: IngestRequest,
-        validation_errors: list[str]
+        self, request: IngestRequest, validation_errors: list[str]
     ) -> None:
         """Validate device-related fields.
 
@@ -254,9 +250,7 @@ class IngestService:
             validation_errors.append("interface cannot be empty")
 
     def _validate_metric_fields(
-        self,
-        request: IngestRequest,
-        validation_errors: list[str]
+        self, request: IngestRequest, validation_errors: list[str]
     ) -> None:
         """Validate metric-related fields.
 
@@ -271,9 +265,7 @@ class IngestService:
             validation_errors.append("metric_value must be finite")
 
     def _validate_timestamp_field(
-        self,
-        request: IngestRequest,
-        validation_errors: list[str]
+        self, request: IngestRequest, validation_errors: list[str]
     ) -> None:
         """Validate timestamp field.
 
@@ -301,20 +293,18 @@ class IngestService:
         try:
             # Get partitioned stream name based on device_id
             stream_name = self._partitioner.get_stream_name(
-                base_name=self._base_stream_name,
-                device_id=event.device_id
+                base_name=self._base_stream_name, device_id=event.device_id
             )
 
             event_id = await self._stream.publish(
-                stream=stream_name,
-                data=self._serialize_event(event)
+                stream=stream_name, data=self._serialize_event(event)
             )
 
             _log.info(
                 "Published telemetry event: event_id=%s, device=%s, stream=%s",
                 event_id,
                 event.device_id,
-                stream_name
+                stream_name,
             )
 
             return event_id
@@ -338,7 +328,7 @@ class IngestService:
             "interface": event.interface,
             "metric_name": event.metric_name,
             "metric_value": str(event.metric_value),
-            "timestamp": event.timestamp.isoformat()
+            "timestamp": event.timestamp.isoformat(),
         }
         return serialized_data
 
@@ -365,7 +355,7 @@ class IngestService:
             interface=request.interface,
             metric_name=request.metric_name,
             metric_value=request.metric_value,
-            timestamp=request.timestamp
+            timestamp=request.timestamp,
         )
 
         return event
