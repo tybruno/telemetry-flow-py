@@ -26,10 +26,12 @@ import logging as _log
 
 from src.core.protocols import StreamProtocol
 from src.ingest.service import IngestService
+from src.streams.partitioner import StreamPartitioner
 
 # Global service instance (initialized on startup)
 _service_instance: IngestService | None = None
 _stream_instance: StreamProtocol | None = None
+_partitioner_instance: StreamPartitioner | None = None
 
 
 def get_stream() -> StreamProtocol:
@@ -86,29 +88,39 @@ def get_ingest_service() -> IngestService:
     return _service_instance
 
 
-def initialize_service(stream: StreamProtocol) -> None:
+def initialize_service(
+    stream: StreamProtocol,
+    partitioner: StreamPartitioner
+) -> None:
     """Initialize the ingest service with dependencies.
 
     Called during application startup to wire up dependencies
-    and create the service instance.
+    and create the service instance with partitioning support.
 
     Args:
         stream: Stream protocol implementation.
+        partitioner: Stream partitioner for horizontal scaling.
 
     Example:
         Application startup::
 
             from src.streams.redis_stream import RedisStream
+            from src.streams.partitioner import StreamPartitioner
 
             stream = RedisStream(url="redis://localhost")
-            initialize_service(stream=stream)
+            partitioner = StreamPartitioner(num_partitions=3)
+            initialize_service(stream=stream, partitioner=partitioner)
     """
-    global _service_instance, _stream_instance
+    global _service_instance, _stream_instance, _partitioner_instance
 
     _stream_instance = stream
-    _service_instance = IngestService(stream=stream)
+    _partitioner_instance = partitioner
+    _service_instance = IngestService(
+        stream=stream,
+        partitioner=partitioner
+    )
 
-    _log.info("Ingest service initialized")
+    _log.info("Ingest service initialized with %d partitions", partitioner.num_partitions)
 
 
 __all__ = [

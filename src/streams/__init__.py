@@ -2,6 +2,7 @@
 
 Implementations:
     RedisStream: Redis Streams implementation
+    StreamPartitioner: Partitioning for horizontal scaling
 
 Models:
     StreamMessage: Stream message model
@@ -18,6 +19,17 @@ from src.streams.exceptions import (
     StreamError,
 )
 from src.streams.models import StreamMessage
+from src.streams.partitioner import StreamPartitioner
+from src.streams.redis_stream import RedisStream
+
+__all__ = [
+    "BackpressureError",
+    "ConsumerGroupError",
+    "RedisStream",
+    "StreamError",
+    "StreamMessage",
+    "StreamPartitioner",
+]
 from src.streams.redis_stream import RedisStream
 
 __all__ = [

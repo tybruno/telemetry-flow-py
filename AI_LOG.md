@@ -4,6 +4,147 @@
 
 ---
 
+## Interaction: Stream Partitioning for Horizontal Scaling
+**Tool:** GitHub Copilot (Claude Sonnet 4.5)  
+**Mode:** Chat  
+**Instructions File:** `.github/copilot-instructions.md`  
+**Purpose:** Implement stream partitioning to enable proper horizontal scaling with data locality for stateful aggregation
+
+### Prompt
+```
+Let's do the partitioning as you suggested. Before that let's go ahead and commit our changes.
+```
+
+### AI Response Summary
+Implemented stream partitioning infrastructure to solve the distributed aggregation challenge. After committing deployment fixes, created complete partitioning system using consistent hashing to ensure events from the same device always route to the same processor, maintaining accurate window aggregation.
+
+**Architecture Decision:**
+Chose partitioning over shared state for:
+- Data locality: Same device → same partition → same processor
+- Performance: No distributed coordination overhead
+- Simplicity: Maintains local in-memory windowing
+- Scalability: Linear scaling by adding partitions
+
+**Partitioning Design:**
+- Uses MD5 consistent hashing on `device_id`
+- Default 3 partitions: `telemetry:0`, `telemetry:1`, `telemetry:2`
+- Each processor assigned to specific partition(s)
+- StreamPartitioner provides deterministic device → partition mapping
+
+**Implementation Components:**
+
+1. **StreamPartitioner Class** (`src/streams/partitioner.py`)
+   - `get_partition(device_id)` - Returns partition number using MD5 hash
+   - `get_stream_name(base, device_id)` - Returns partitioned stream name
+   - `get_all_stream_names(base)` - Lists all partition streams
+   - Supports configurable number of partitions
+
+2. **IngestService Modifications** (`src/ingest/service.py`)
+   - Added `partitioner` instance variable and parameter
+   - Modified `_publish_event()` to use `partitioner.get_stream_name()` instead of hardcoded "telemetry"
+   - Logs partition assignment for each published event
+
+3. **Processor Configuration** (`src/processor/config.py`)
+   - Added `partition_id` and `num_partitions` configuration fields
+   - Added `get_stream_name()` method to return partitioned stream name
+   - Enhanced validation to ensure partition_id in valid range
+
+4. **Processor Worker** (`src/processor/main.py`)
+   - Updated to use `config.get_stream_name()` for stream selection
+   - Logs partition configuration on startup
+   - Consumer reads only from assigned partition
+
+5. **Docker Compose Configuration** (`docker-compose.yml`)
+   - Added `NUM_PARTITIONS=3` to ingest service
+   - Replaced replicas with explicit processor services: processor-0, processor-1, processor-2
+   - Each processor assigned specific partition via `PROCESSOR_PARTITION_ID` environment variable
+   - All processors configured with `PROCESSOR_NUM_PARTITIONS=3`
+
+**Dependency Injection Updates:**
+- `src/ingest/dependencies.py` - Modified `initialize_service()` to accept `partitioner` parameter
+- `src/ingest/main.py` - Creates `StreamPartitioner` instance and passes to service initialization
+- `src/streams/__init__.py` - Added `StreamPartitioner` to module exports
+
+**Data Flow:**
+1. Simulator sends telemetry with device_id
+2. IngestService receives event
+3. StreamPartitioner hashes device_id → partition number
+4. Event published to partition-specific stream (e.g., `telemetry:1`)
+5. Assigned processor consumes from its partition stream
+6. Processor maintains accurate window state for all devices in its partition
+
+**Testing Plan:**
+- Verify same device_id always routes to same partition
+- Confirm each processor only consumes from assigned partition
+- Validate windowing accuracy with partitioned deployment
+- Test with multiple devices across all partitions
+
+**Files Created/Modified:**
+- `src/streams/partitioner.py` - **NEW** StreamPartitioner class with consistent hashing
+- `src/streams/__init__.py` - Added StreamPartitioner export
+- `src/ingest/service.py` - Added partitioner support, modified _publish_event()
+- `src/ingest/dependencies.py` - Updated initialize_service() signature
+- `src/ingest/main.py` - Creates partitioner, passes NUM_PARTITIONS from env
+- `src/processor/config.py` - Added partition_id, num_partitions, get_stream_name()
+- `src/processor/main.py` - Uses config.get_stream_name() for partition assignment
+- `docker-compose.yml` - Added NUM_PARTITIONS to ingest, explicit processor-0/1/2 services
+
+**Commit:** (pending)
+
+---
+
+## Interaction: End-to-End System Testing & Deployment Fixes
+**Tool:** GitHub Copilot (Claude Sonnet 4.5)  
+**Mode:** Chat  
+**Instructions File:** `.github/copilot-instructions.md`  
+**Purpose:** Deploy and test complete system via Docker Compose, fix configuration and integration issues
+
+### Prompt
+```
+Okay, let's actually run this, run what we have here to ensure that the code is working as expected. Let's make sure we test the cases, all the cases.
+```
+
+### AI Response Summary
+Successfully deployed and tested entire telemetry processing system via Docker Compose. Fixed multiple issues discovered during deployment:
+
+**Configuration Issues Fixed:**
+1. **Pydantic V2 Migration** - Updated ProcessorConfig to use Pydantic V2 SettingsConfigDict and Field with validation_alias for REDIS_URL environment variable handling
+2. **Redis URL Environment Variable** - Fixed processor config to accept both PROCESSOR_REDIS_URL and REDIS_URL (for Docker Compose compatibility)
+3. **Async Generator Bug** - Fixed `await` being called on async generator in consumer.py (line 146: removed incorrect `await`)
+
+**Simulator Fixes:**
+1. **Missing httpx Dependency** - Added httpx>=0.26.0 to requirements.txt for HTTP client
+2. **Wrong API Endpoint** - Fixed simulator to send to `/api/v1/telemetry` instead of `/telemetry`  
+3. **Removed Logging Utility** - Eliminated unnecessary `src/utils/logging.py` module, simplified to use `logging.basicConfig()` directly
+4. **Updated Dockerfile** - Removed utils directory from simulator Docker image (no longer needed)
+
+**Testing Results:**
+- ✅ All 6 Docker services built successfully (redis, ingest, processor×2, simulator)
+- ✅ Ingest service running on port 8000, accepting events via POST /api/v1/telemetry
+- ✅ Both processor instances consuming from Redis Streams consumer group
+- ✅ Tumbling window aggregation working (60-second windows)
+- ✅ Anomaly detection triggering alerts when average exceeds threshold (80.0)
+- ✅ Console alerts generated with detailed window statistics
+- ✅ Load balancing verified across 2 processor replicas
+
+**Windowing Architecture Discovery:**
+Identified important architectural consideration: With multiple processor instances using consumer groups, events are distributed across processors. Each processor maintains separate in-memory window state, meaning each sees only a subset of events. This affects aggregation accuracy in scaled deployments.
+
+**Files Created/Modified:**
+- `requirements.txt` - Added httpx>=0.26.0 dependency
+- `simulator/main.py` - Fixed API endpoint to /api/v1/telemetry, replaced setup_logging with logging.basicConfig
+- `src/consumers/consumer.py` - Removed incorrect await on async generator (line 146)
+- `src/processor/config.py` - Updated to Pydantic V2 with SettingsConfigDict and Field validation_alias
+- `src/utils/__init__.py` - Removed setup_logging export
+- `src/utils/logging.py` - **DELETED** (unnecessary utility module)
+- `tests/utils/test_logging.py` - **DELETED** (tests for removed module)
+- `tests/utils/test_logging_handlers.py` - **DELETED** (tests for removed module)
+- `docker/simulator.Dockerfile` - Removed src/utils/ copy (no longer needed)
+
+**Commit:** (pending)
+
+---
+
 ## Interaction 1: Initial Assignment Review
 **Tool:** GitHub Copilot (Claude Sonnet 4.5)
 **Mode:** Chat

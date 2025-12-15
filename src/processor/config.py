@@ -15,6 +15,8 @@ class ProcessorConfig(BaseSettings):
 
     Loads settings from environment variables and config files.
     Uses Pydantic Settings for type-safe configuration management.
+    
+    Supports partitioned stream consumption for horizontal scaling.
 
     Attributes:
         window_size_seconds: Tumbling window duration in seconds.
@@ -23,12 +25,21 @@ class ProcessorConfig(BaseSettings):
         max_retries: Maximum message processing retry attempts.
         default_threshold: Default anomaly detection threshold.
         metric_thresholds: Per-metric threshold overrides.
-        stream_name: Name of telemetry stream to consume.
+        stream_name: Base name of telemetry streams (without partition suffix).
         redis_url: Redis connection URL.
+        partition_id: Optional partition ID for this processor (enables partitioning).
+        num_partitions: Total number of partitions (required if partition_id set).
 
     Example:
-        # From environment and config file
+        # Single stream (no partitioning)
         config = ProcessorConfig(_env_file="config/processor.yaml")
+        
+        # Partitioned stream
+        config = ProcessorConfig(
+            partition_id=0,
+            num_partitions=3,
+            _env_file="config/processor.yaml"
+        )
 
         aggregator = TumblingWindowAggregator(
             window_size=config.window_size_seconds
@@ -57,6 +68,37 @@ class ProcessorConfig(BaseSettings):
         default="redis://localhost:6379",
         validation_alias="REDIS_URL",
     )
+    partition_id: int | None = None
+    num_partitions: int | None = None
+    
+    def get_stream_name(self) -> str:
+        """Get the stream name for this processor.
+        
+        Returns partitioned stream name if partition_id is set,
+        otherwise returns base stream name.
+        
+        Returns:
+            Stream name to consume from.
+            
+        Example:
+            # No partitioning
+            config = ProcessorConfig(stream_name="telemetry")
+            assert config.get_stream_name() == "telemetry"
+            
+            # With partitioning
+            config = ProcessorConfig(
+                stream_name="telemetry",
+                partition_id=1,
+                num_partitions=3
+            )
+            assert config.get_stream_name() == "telemetry:1"
+        """
+        if self.partition_id is not None:
+            partitioned_stream_name = f"{self.stream_name}:{self.partition_id}"
+            return partitioned_stream_name
+        
+        stream_name = self.stream_name
+        return stream_name
 
     def validate_config(self) -> None:
         """Validate configuration values.
@@ -82,6 +124,21 @@ class ProcessorConfig(BaseSettings):
             raise ValueError(
                 f"Invalid default_threshold: {self.default_threshold}"
             ) from None
+            
+        # Validate partition configuration
+        if self.partition_id is not None:
+            if self.num_partitions is None:
+                error_message = "num_partitions required when partition_id is set"
+                _log.error(error_message)
+                raise ValueError(error_message) from None
+            
+            if self.partition_id < 0 or self.partition_id >= self.num_partitions:
+                error_message = "partition_id=%d must be in range [0, %d)"
+                _log.error(error_message, self.partition_id, self.num_partitions)
+                raise ValueError(
+                    f"Invalid partition_id: {self.partition_id} "
+                    f"(must be 0 <= partition_id < {self.num_partitions})"
+                ) from None
 
         for metric_name, threshold in self.metric_thresholds.items():
             if threshold < 0:

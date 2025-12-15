@@ -98,11 +98,22 @@ async def run_worker() -> None:
     config = ProcessorConfig()
     config.validate_config()
 
+    # Get stream name (handles partitioning if configured)
+    stream_name = config.get_stream_name()
+
     _log.info(
-        "Configuration loaded: window_size=%ds, threshold=%.2f",
+        "Configuration loaded: window_size=%ds, threshold=%.2f, stream=%s",
         config.window_size_seconds,
         config.default_threshold,
+        stream_name,
     )
+    
+    if config.partition_id is not None:
+        _log.info(
+            "Partitioning enabled: partition_id=%d, num_partitions=%d",
+            config.partition_id,
+            config.num_partitions,
+        )
 
     # Generate unique consumer name for this worker instance
     consumer_name = f"{config.consumer_name_prefix}-{uuid.uuid4().hex[:8]}"
@@ -113,14 +124,14 @@ async def run_worker() -> None:
     # Create consumer group if it doesn't exist
     try:
         await stream.create_consumer_group(
-            stream=config.stream_name,
+            stream=stream_name,
             group=config.consumer_group,
             start_id="0",  # Process from beginning on first run
         )
         _log.info(
             "Created consumer group: %s for stream: %s",
             config.consumer_group,
-            config.stream_name,
+            stream_name,
         )
     except Exception as e:
         # Consumer group may already exist, which is fine
@@ -136,7 +147,7 @@ async def run_worker() -> None:
         deserializer=deserializer,
         error_handler=error_handler,
         backpressure=backpressure,
-        stream_name=config.stream_name,
+        stream_name=stream_name,
         group_name=config.consumer_group,
         consumer_name=consumer_name,
     )

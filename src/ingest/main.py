@@ -53,11 +53,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.core.protocols import StreamProtocol
 from src.ingest.api import router
 from src.ingest.dependencies import initialize_service
+from src.streams.partitioner import StreamPartitioner
 from src.streams.redis_stream import RedisStream
 
 # Environment configuration (loaded at module level)
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+NUM_PARTITIONS = int(os.getenv("NUM_PARTITIONS", "3"))
 
 
 @asynccontextmanager
@@ -76,16 +78,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Startup: Initialize dependencies
     _log.info("Starting ingest service...")
 
-    # Get Redis URL from app state (set by main)
+    # Get Redis URL and partition config from app state
     redis_url = getattr(app.state, "redis_url", REDIS_URL)
+    num_partitions = getattr(app.state, "num_partitions", NUM_PARTITIONS)
 
     # Initialize Redis stream
     stream = RedisStream(url=redis_url)
     app.state.stream = stream
     _log.info("Redis stream initialized: url=%s", redis_url)
 
+    # Initialize stream partitioner for horizontal scaling
+    partitioner = StreamPartitioner(num_partitions=num_partitions)
+    app.state.partitioner = partitioner
+    _log.info("Stream partitioner initialized: partitions=%d", num_partitions)
+
     # Initialize service dependencies
-    initialize_service(stream=cast(StreamProtocol, stream))
+    initialize_service(
+        stream=cast(StreamProtocol, stream),
+        partitioner=partitioner
+    )
     _log.info("Ingest service dependencies initialized")
 
     yield

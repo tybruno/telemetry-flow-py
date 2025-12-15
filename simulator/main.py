@@ -47,7 +47,6 @@ import os
 import random
 import sys
 from datetime import datetime, timezone
-from typing import Any
 
 import httpx
 
@@ -111,7 +110,7 @@ def generate_metric_value(metric_name: str, is_anomaly: bool) -> float:
     Returns:
         Metric value.
     """
-    ranges: dict[str, dict[str, tuple[float, float]]] = {
+    ranges = {
         "packet_loss_rate": {
             "normal": (0.01, 0.05),
             "anomaly": (0.15, 0.30),

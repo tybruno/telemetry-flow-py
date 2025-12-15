@@ -20,22 +20,49 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
       - LOG_LEVEL=INFO
+      - NUM_PARTITIONS=3
     depends_on:
       redis:
         condition: service_healthy
 
-  processor:
+  processor-0:
     build:
       context: .
       dockerfile: docker/processor.Dockerfile
     environment:
       - REDIS_URL=redis://redis:6379
       - LOG_LEVEL=INFO
+      - PROCESSOR_PARTITION_ID=0
+      - PROCESSOR_NUM_PARTITIONS=3
     depends_on:
       redis:
         condition: service_healthy
-    deploy:
-      replicas: 2
+
+  processor-1:
+    build:
+      context: .
+      dockerfile: docker/processor.Dockerfile
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=INFO
+      - PROCESSOR_PARTITION_ID=1
+      - PROCESSOR_NUM_PARTITIONS=3
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  processor-2:
+    build:
+      context: .
+      dockerfile: docker/processor.Dockerfile
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=INFO
+      - PROCESSOR_PARTITION_ID=2
+      - PROCESSOR_NUM_PARTITIONS=3
+    depends_on:
+      redis:
+        condition: service_healthy
 
   simulator:
     build:

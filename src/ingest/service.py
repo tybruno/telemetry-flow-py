@@ -27,6 +27,7 @@ from src.core.models import TelemetryEvent
 from src.core.protocols import StreamProtocol
 from src.ingest.exceptions import InvalidPayloadError, StreamPublishError
 from src.ingest.models import IngestRequest, IngestResponse
+from src.streams.partitioner import StreamPartitioner
 
 
 class IngestService:
@@ -34,15 +35,24 @@ class IngestService:
 
     Handles validation, transformation, and publishing of telemetry
     events. Depends on a StreamProtocol implementation for publishing.
+    
+    Uses partitioning to distribute events across multiple streams
+    based on device_id, enabling horizontal scaling of processors.
 
     Attributes:
         _stream: Stream protocol implementation for publishing events.
+        _partitioner: Stream partitioner for horizontal scaling.
+        _base_stream_name: Base name for telemetry streams.
         _start_time: Service start time for uptime tracking.
 
     Example:
         Creating and using the service::
 
-            service = IngestService(stream=redis_stream)
+            partitioner = StreamPartitioner(num_partitions=3)
+            service = IngestService(
+                stream=redis_stream,
+                partitioner=partitioner
+            )
 
             response = await service.ingest_telemetry(
                 IngestRequest(
@@ -55,28 +65,49 @@ class IngestService:
             )
     """
 
-    __slots__ = ("_start_time", "_stream")
+    __slots__ = ("_start_time", "_stream", "_partitioner", "_base_stream_name")
 
     _stream: StreamProtocol
+    _partitioner: StreamPartitioner
+    _base_stream_name: str
     _start_time: datetime
 
-    def __init__(self, *, stream: StreamProtocol) -> None:
+    def __init__(
+        self,
+        *,
+        stream: StreamProtocol,
+        partitioner: StreamPartitioner,
+        base_stream_name: str = "telemetry",
+    ) -> None:
         """Initialize the ingest service.
 
         Args:
             stream: Stream protocol implementation for publishing events.
+            partitioner: Stream partitioner for horizontal scaling.
+            base_stream_name: Base name for telemetry streams (default: "telemetry").
 
         Example:
-            Initialize with Redis stream::
+            Initialize with Redis stream and partitioning::
 
                 from src.streams.redis_stream import RedisStream
+                from src.streams.partitioner import StreamPartitioner
 
                 stream = RedisStream(url="redis://localhost:6379")
-                service = IngestService(stream=stream)
+                partitioner = StreamPartitioner(num_partitions=3)
+                service = IngestService(
+                    stream=stream,
+                    partitioner=partitioner
+                )
         """
         self._stream = stream
+        self._partitioner = partitioner
+        self._base_stream_name = base_stream_name
         self._start_time = datetime.now(timezone.utc)
-        _log.info("Ingest service initialized")
+        _log.info(
+            "Ingest service initialized: partitions=%d, base_stream=%s",
+            partitioner.num_partitions,
+            base_stream_name,
+        )
 
     async def ingest_telemetry(
         self,
@@ -256,7 +287,7 @@ class IngestService:
             validation_errors.append("timestamp must be timezone-aware")
 
     async def _publish_event(self, event: TelemetryEvent) -> str:
-        """Publish event to stream.
+        """Publish event to partitioned stream based on device_id.
 
         Args:
             event: Event to publish.
@@ -268,15 +299,22 @@ class IngestService:
             StreamPublishError: If publish fails.
         """
         try:
+            # Get partitioned stream name based on device_id
+            stream_name = self._partitioner.get_stream_name(
+                base_name=self._base_stream_name,
+                device_id=event.device_id
+            )
+            
             event_id = await self._stream.publish(
-                stream="telemetry",
+                stream=stream_name,
                 data=self._serialize_event(event)
             )
 
             _log.info(
-                "Published telemetry event: event_id=%s, device=%s",
+                "Published telemetry event: event_id=%s, device=%s, stream=%s",
                 event_id,
-                event.device_id
+                event.device_id,
+                stream_name
             )
 
             return event_id
