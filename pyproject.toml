@@ -86,3 +86,6 @@ addopts = [
     "--cov-report=html",
 ]
 asyncio_mode = "auto"
+markers = [
+    "integration: mark test as integration test requiring external services (Redis)",
+]
